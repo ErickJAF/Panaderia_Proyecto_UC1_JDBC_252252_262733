@@ -283,32 +283,51 @@ CREATE PROCEDURE sp_crear_pedido_programado(
 BEGIN
     DECLARE nuevo_id INT;
 
+    -- Si ocurre cualquier error SQL → rollback automático
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+    END;
+
+    START TRANSACTION;
+
     -- Insertar en PEDIDO
-    INSERT INTO PEDIDO(fecha_creacion, estado, subtotal, descuento, total, id_empleado)
-    VALUES(p_fecha, p_estado, p_subtotal, p_descuento, p_total, p_id_empleado);
+    INSERT INTO PEDIDO(
+        fecha_creacion,
+        estado,
+        subtotal,
+        descuento,
+        total,
+        id_empleado
+    )
+    VALUES(
+        p_fecha,
+        p_estado,
+        p_subtotal,
+        p_descuento,
+        p_total,
+        p_id_empleado
+    );
 
     SET nuevo_id = LAST_INSERT_ID();
 
     -- Insertar en PROGRAMADO
-    INSERT INTO PROGRAMADO(id_pedido, id_cliente, id_cupon)
-    VALUES(nuevo_id, p_id_cliente, p_id_cupon);
+    INSERT INTO PROGRAMADO(
+        id_pedido,
+        id_cliente,
+        id_cupon
+    )
+    VALUES(
+        nuevo_id,
+        p_id_cliente,
+        p_id_cupon
+    );
+
+    COMMIT;
 
 END //
 
-DELIMITER ;
-
-CALL sp_crear_pedido_programado(
-    CURDATE(),
-    'Pendiente',
-    200.00,
-    10.00,
-    190.00,
-    1,
-    1,
-    1
-);
-
-DELIMITER //
+DELIMITER 
 
 CREATE TRIGGER trg_actualizar_usos_cupon
 AFTER INSERT ON PROGRAMADO
