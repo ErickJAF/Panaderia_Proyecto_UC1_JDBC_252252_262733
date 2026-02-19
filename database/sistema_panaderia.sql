@@ -128,25 +128,64 @@ VALUES
 
 INSERT INTO PRODUCTO (nombre, tipo, descripcion, precio, disponible)
 VALUES
-('Pizza Pepperoni', 'Comida', 'Pizza grande con pepperoni', 150.00, TRUE),
-('Hamburguesa Clásica', 'Comida', 'Carne, queso y vegetales', 95.00, TRUE),
-('Refresco', 'Bebida', 'Refresco 600ml', 25.00, TRUE);
+('Pan de Caja Integral', 'Panadería', 'Pan integral de 500g', 40.00, TRUE),
+('Baguette Francesa', 'Panadería', 'Baguette recién horneada', 25.00, TRUE),
+('Croissant de Mantequilla', 'Panadería', 'Croissant hojaldrado con mantequilla', 30.00, TRUE),
+('Pan de Chocolate', 'Panadería', 'Pan dulce relleno de chocolate', 35.00, TRUE),
+('Concha Tradicional', 'Panadería', 'Pan dulce con cobertura de azúcar', 20.00, TRUE),
+('Pan de Queso', 'Panadería', 'Pan salado relleno de queso', 28.00, TRUE),
+('Galletas Artesanales', 'Panadería', 'Paquete de 6 galletas surtidas', 25.00, TRUE),
+('Pan de Nuez', 'Panadería', 'Pan dulce con nuez troceada', 32.00, TRUE),
+('Rollito de Canela', 'Panadería', 'Rollito suave con canela y azúcar', 30.00, TRUE),
+('Empanada de Fruta', 'Panadería', 'Empanada rellena de fruta natural', 27.00, TRUE);
 
 INSERT INTO INGREDIENTE (nombre)
 VALUES
+('Harina'),
+('Azúcar'),
+('Levadura'),
+('Mantequilla'),
+('Chocolate'),
+('Nuez'),
+('Canela'),
 ('Queso'),
-('Pepperoni'),
-('Carne'),
-('Pan'),
-('Lechuga');
+('Fruta'),
+('Leche');
 
 INSERT INTO PRODUCTO_INGREDIENTE (id_producto, id_ingrediente)
 VALUES
-(1,1),
-(1,2),
-(2,3),
-(2,4),
-(2,5);
+(1, 1),
+(1, 3),
+(1, 2),
+(1,10),
+(2, 1),
+(2, 3),
+(2,10),
+(3, 1),
+(3, 4),
+(3, 2),
+(4, 1),
+(4, 5),
+(4, 2),
+(5, 1),
+(5, 2),
+(5, 3),
+(6, 1),
+(6, 8),
+(6, 3),
+(7, 1),
+(7, 2),
+(7, 4),
+(8, 1),
+(8, 6),
+(8, 3),
+(9, 1),
+(9, 7),
+(9, 2),
+(9, 4),
+(10,1),
+(10,9),
+(10,2);
 
 INSERT INTO CUPON (codigo, descuento, usos_maximos, usos_actuales, activo, fecha_inicio, fecha_fin)
 VALUES
@@ -167,9 +206,16 @@ VALUES
 
 INSERT INTO DETALLE_PEDIDO (cantidad, nota, precio_unitario, id_pedido, id_producto)
 VALUES
-(1, 'Sin orilla', 150.00, 1, 1),
-(1, NULL, 25.00, 1, 3),
-(1, NULL, 95.00, 2, 2);
+(2, 'Sin corteza', 40.00, 1, 1),
+(1, '', 25.00, 1, 2),
+(3, 'Muy mantequilla', 30.00, 1, 3),
+(1, '', 35.00, 1, 4),
+(2, '', 20.00, 1, 5),
+(1, '', 28.00, 1, 6),
+(1, '', 25.00, 1, 7),
+(1, '', 32.00, 1, 8),
+(2, '', 30.00, 1, 9),
+(1, '', 27.00, 1, 10);
 
 INSERT INTO PAGO (fecha_pago, monto, metodo_pago, id_pedido)
 VALUES
@@ -222,7 +268,6 @@ FROM EMPLEADO e
 JOIN PEDIDO p ON e.id_empleado = p.id_empleado
 GROUP BY e.nombre_completo;
 
-DROP PROCEDURE IF EXISTS sp_crear_pedido_programado;
 DELIMITER //
 
 CREATE PROCEDURE sp_crear_pedido_programado(
@@ -233,17 +278,21 @@ CREATE PROCEDURE sp_crear_pedido_programado(
     IN p_total DECIMAL(10,2),
     IN p_id_empleado INT,
     IN p_id_cliente INT,
-    IN p_id_cupon INT,
-    OUT p_id_generado INT
+    IN p_id_cupon INT
 )
 BEGIN
+    DECLARE nuevo_id INT;
+
+    -- Insertar en PEDIDO
     INSERT INTO PEDIDO(fecha_creacion, estado, subtotal, descuento, total, id_empleado)
     VALUES(p_fecha, p_estado, p_subtotal, p_descuento, p_total, p_id_empleado);
 
-    SET p_id_generado = LAST_INSERT_ID();
+    SET nuevo_id = LAST_INSERT_ID();
 
+    -- Insertar en PROGRAMADO
     INSERT INTO PROGRAMADO(id_pedido, id_cliente, id_cupon)
-    VALUES(p_id_generado, p_id_cliente, p_id_cupon);
+    VALUES(nuevo_id, p_id_cliente, p_id_cupon);
+
 END //
 
 DELIMITER ;
