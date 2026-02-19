@@ -4,21 +4,26 @@
  */
 package presentacion;
 
+import dto.DetallePedidoDTO;
 import dto.PedidoProgramadoDTO;
-import negocio.PedidoProgramadoBO;
+import dto.ProductoDTO;
+import negocio.IProductoBO;
+import negocio.IPedidoProgramadoBO;
 import persistencia.conexion.IConexionBD;
 import persistencia.excepciones.PersistenciaException;
+import negocio.PedidoProgramadoBO;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-
+import java.util.ArrayList;
+import java.util.List;
 /**
  *
  * @author icoro
  */
 public class FrmCrearPedidoProgramado extends JFrame{
-       private JTable tablaProductos;
+     private JTable tablaProductos;
     private JTextField txtIdCliente;
     private JTextField txtIdEmpleado;
     private JTextField txtCupon;
@@ -26,12 +31,16 @@ public class FrmCrearPedidoProgramado extends JFrame{
 
     private DefaultTableModel modelo;
 
-    private final PedidoProgramadoBO pedidoBO;
+    private final IPedidoProgramadoBO pedidoBO;
+    private final IProductoBO productoBO;
 
-    public FrmCrearPedidoProgramado(IConexionBD conexionBD) {
-        this.pedidoBO = new PedidoProgramadoBO(conexionBD);
+    public FrmCrearPedidoProgramado(IConexionBD conexionBD, IProductoBO productoBO) {
+
+       this.pedidoBO = new PedidoProgramadoBO(conexionBD);
+        this.productoBO = productoBO;
+
         inicializar();
-        cargarProductosPrueba();
+        cargarProductosBD();
     }
 
     private void inicializar() {
@@ -42,11 +51,14 @@ public class FrmCrearPedidoProgramado extends JFrame{
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        modelo = new DefaultTableModel();
-        modelo.addColumn("Producto");
-        modelo.addColumn("Precio");
-        modelo.addColumn("Cantidad");
-        modelo.addColumn("Nota");
+        modelo = new DefaultTableModel(
+                new Object[]{"ID", "Producto", "Precio", "Cantidad", "Nota"}, 0) {
+
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 3 || column == 4;
+            }
+        };
 
         tablaProductos = new JTable(modelo);
 
@@ -75,35 +87,86 @@ public class FrmCrearPedidoProgramado extends JFrame{
         btnAgregarPedido.addActionListener(e -> crearPedido());
     }
 
-    private void cargarProductosPrueba() {
+    private void cargarProductosBD() {
 
-        modelo.addRow(new Object[]{"Concha", 18.00, 0, ""});
-        modelo.addRow(new Object[]{"Bolillo", 10.00, 0, ""});
-        modelo.addRow(new Object[]{"Rol de Canela", 25.00, 0, ""});
+        modelo.setRowCount(0);
+
+        try {
+
+            List<ProductoDTO> lista = productoBO.obtenerDisponibles();
+
+            for (ProductoDTO p : lista) {
+
+                modelo.addRow(new Object[]{
+                        p.getIdProducto(),
+                        p.getNombre(),
+                        p.getPrecio(),
+                        0,
+                        ""
+                });
+            }
+
+        } catch (PersistenciaException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
+        }
     }
 
     private void crearPedido() {
 
         try {
 
+            List<DetallePedidoDTO> detalles = new ArrayList<>();
+
             double subtotal = 0;
 
-            for(int i=0; i<modelo.getRowCount(); i++) {
-                int cantidad = Integer.parseInt(modelo.getValueAt(i,2).toString());
-                double precio = Double.parseDouble(modelo.getValueAt(i,1).toString());
-                subtotal += cantidad * precio;
+            for (int i = 0; i < modelo.getRowCount(); i++) {
+
+    Object cantidadObj = modelo.getValueAt(i,3);
+
+    if(cantidadObj == null || cantidadObj.toString().isBlank())
+        continue;
+
+    int cantidad = Integer.parseInt(cantidadObj.toString());
+
+    if (cantidad > 0) {
+
+        int idProducto = Integer.parseInt(modelo.getValueAt(i,0).toString());
+        double precio = Double.parseDouble(modelo.getValueAt(i,2).toString());
+
+        String nota = "";
+        Object notaObj = modelo.getValueAt(i,4);
+
+        if(notaObj != null)
+            nota = notaObj.toString();
+
+        subtotal += cantidad * precio;
+
+        detalles.add(
+            new DetallePedidoDTO(idProducto, cantidad, precio, nota)
+        );
+    }
+}
+
+
+            if(detalles.isEmpty()){
+                JOptionPane.showMessageDialog(this,
+                        "Debe seleccionar al menos un producto",
+                        "Validación",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
             }
 
             double descuento = 0;
-            double total = subtotal - descuento;
+            double total = subtotal;
 
             int idCliente = Integer.parseInt(txtIdCliente.getText());
             int idEmpleado = Integer.parseInt(txtIdEmpleado.getText());
 
             Integer idCupon = null;
+
             if(!txtCupon.getText().isBlank()){
                 idCupon = Integer.parseInt(txtCupon.getText());
-                descuento = 10; // simulación
+                descuento = 10;
                 total = subtotal - descuento;
             }
 
@@ -114,7 +177,8 @@ public class FrmCrearPedidoProgramado extends JFrame{
                             subtotal,
                             descuento,
                             total,
-                            idCupon
+                            idCupon,
+                            detalles
                     );
 
             pedidoBO.crearPedidoProgramado(dto);
@@ -124,24 +188,10 @@ public class FrmCrearPedidoProgramado extends JFrame{
                     "Éxito",
                     JOptionPane.INFORMATION_MESSAGE);
 
-        } catch (NumberFormatException ex) {
-
-            JOptionPane.showMessageDialog(this,
-                    "Verifica cantidades e IDs",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-
-        } catch (IllegalArgumentException ex) {
+        } catch (Exception ex) {
 
             JOptionPane.showMessageDialog(this,
                     ex.getMessage(),
-                    "Validación",
-                    JOptionPane.WARNING_MESSAGE);
-
-        } catch (PersistenciaException ex) {
-
-            JOptionPane.showMessageDialog(this,
-                    "Error BD:\n" + ex.getMessage(),
                     "Error",
                     JOptionPane.ERROR_MESSAGE);
         }

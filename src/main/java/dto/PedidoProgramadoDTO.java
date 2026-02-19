@@ -4,27 +4,36 @@
  */
 package dto;
 
+import java.util.List;
+
 /**
  *
  * @author icoro
  */
 public class PedidoProgramadoDTO {
-     private int idCliente;
+   private int idCliente;
     private int idEmpleado;
     private double subtotal;
     private double descuento;
     private double total;
     private Integer idCupon;
+    private List<DetallePedidoDTO> detalles; // 🔴 NUEVO
 
-    public PedidoProgramadoDTO(int idCliente, int idEmpleado,
-                               double subtotal, double descuento,
-                               double total, Integer idCupon) {
+    public PedidoProgramadoDTO(int idCliente,
+                               int idEmpleado,
+                               double subtotal,
+                               double descuento,
+                               double total,
+                               Integer idCupon,
+                               List<DetallePedidoDTO> detalles) {
+
         this.idCliente = idCliente;
         this.idEmpleado = idEmpleado;
         this.subtotal = subtotal;
         this.descuento = descuento;
         this.total = total;
         this.idCupon = idCupon;
+        this.detalles = detalles; // 🔴 NUEVO
     }
 
     public int getIdCliente() { return idCliente; }
@@ -33,4 +42,9 @@ public class PedidoProgramadoDTO {
     public double getDescuento() { return descuento; }
     public double getTotal() { return total; }
     public Integer getIdCupon() { return idCupon; }
+
+    // 🔴 NUEVO
+    public List<DetallePedidoDTO> getDetalles() {
+        return detalles;
+    }
 }

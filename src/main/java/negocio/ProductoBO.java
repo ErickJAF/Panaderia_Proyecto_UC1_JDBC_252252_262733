@@ -5,17 +5,15 @@
 package negocio;
 
 import dto.ProductoDTO;
-import java.util.ArrayList;
 import java.util.List;
 import persistencia.DAOs.IProductoDAO;
-import persistencia.dominio.Producto;
 import persistencia.excepciones.PersistenciaException;
 
 /**
  *
  * @author icoro
  */
-public class ProductoBO {
+public class ProductoBO implements IProductoBO{
     
     private final IProductoDAO productoDAO;
     
@@ -24,16 +22,8 @@ public class ProductoBO {
     }
     
     public List<ProductoDTO> obtenerDisponibles() throws PersistenciaException {
-        List<Producto> lista = productoDAO.obtenerDisponibles();
-        
-        List<ProductoDTO> dto = new ArrayList<>();
-        
-        for (Producto p : lista) {
-            p.getIdProducto();
-            p.getNombre();
-            p.getPrecio();
-        }
-        return dto;
+       
+        return productoDAO.obtenerDisponibles();
     }
     
 }

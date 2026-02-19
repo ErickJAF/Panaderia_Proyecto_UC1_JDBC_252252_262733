@@ -6,6 +6,10 @@ package com.mycompany.panaderia_proyecto_uc1_jdbc_252252_262733;
 
 import persistencia.conexion.ConexionBD;
 import persistencia.conexion.IConexionBD;
+import persistencia.DAOs.ProductoDAO;
+import persistencia.DAOs.IProductoDAO;
+import negocio.ProductoBO;
+import negocio.IProductoBO;
 import presentacion.FrmCrearPedidoProgramado;
 
 /**
@@ -17,12 +21,19 @@ public class Panaderia_Proyecto_UC1_JDBC_252252_262733 {
     public static void main(String[] args) {
       
     
+IConexionBD conexion = new ConexionBD();
 
-        IConexionBD conexion = new ConexionBD();
+// DAO
+IProductoDAO productoDAO = new ProductoDAO(conexion);
 
-        FrmCrearPedidoProgramado frm =
-                new FrmCrearPedidoProgramado(conexion);
+// BO
+IProductoBO productoBO = new ProductoBO(productoDAO);
 
-        frm.setVisible(true);
+// FORM
+FrmCrearPedidoProgramado frm =
+        new FrmCrearPedidoProgramado(conexion, productoBO);
+
+frm.setVisible(true);
+
     }
 }

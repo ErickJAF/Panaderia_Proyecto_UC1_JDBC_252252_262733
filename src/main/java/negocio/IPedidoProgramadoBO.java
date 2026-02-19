@@ -2,17 +2,17 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
  */
-package persistencia.DAOs;
+package negocio;
 
-import dto.ProductoDTO;
-import java.util.List;
-import persistencia.dominio.Producto;
+import dto.PedidoProgramadoDTO;
 import persistencia.excepciones.PersistenciaException;
 
 /**
  *
  * @author icoro
  */
-public interface IProductoDAO {
-        List<ProductoDTO>obtenerDisponibles() throws PersistenciaException;
+public interface IPedidoProgramadoBO {
+    
+     void crearPedidoProgramado(PedidoProgramadoDTO dto)
+            throws PersistenciaException;
 }

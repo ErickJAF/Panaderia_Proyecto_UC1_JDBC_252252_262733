@@ -4,6 +4,7 @@
  */
 package persistencia.DAOs;
 
+import dto.ProductoDTO;
 import java.sql.*;
 import java.util.*;
 import persistencia.conexion.IConexionBD;
@@ -21,28 +22,35 @@ public class ProductoDAO implements IProductoDAO{
         this.conexion = conexion;
     }
     @Override
-    public List<Producto> obtenerDisponibles() throws PersistenciaException {
+    public List<ProductoDTO> obtenerDisponibles() throws PersistenciaException {
 
-        List<Producto> lista = new ArrayList<>();
+      String sql = """
+        SELECT id_producto, nombre, precio
+        FROM PRODUCTO
+        WHERE disponible = 1
+    """;
 
-        String sql = "SELECT * FROM PRODUCTO WHERE disponible = TRUE";
+    List<ProductoDTO> lista = new ArrayList<>();
 
-        try (Connection conn = conexion.crearConexion();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+    try(Connection conn = conexion.crearConexion();
+        PreparedStatement ps = conn.prepareStatement(sql);
+        ResultSet rs = ps.executeQuery()){
 
-            while (rs.next()) {
-                Producto p = new Producto();
-                p.setIdProducto(rs.getInt("id_producto"));
-                p.setNombre(rs.getString("nombre"));
-                p.setPrecio(rs.getDouble("precio"));
-                lista.add(p);
-            }
+        while(rs.next()){
 
-        } catch (SQLException e) {
-            throw new PersistenciaException("Error al obtener productos", e);
+            ProductoDTO p = new ProductoDTO(
+                    rs.getInt("id_producto"),
+                    rs.getString("nombre"),
+                    rs.getDouble("precio")
+            );
+
+            lista.add(p);
         }
 
         return lista;
+
+    }catch(SQLException ex){
+        throw new PersistenciaException("Error al obtener productos", ex);
     }
+}
 }

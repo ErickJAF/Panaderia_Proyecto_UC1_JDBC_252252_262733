@@ -4,7 +4,11 @@
  */
 package negocio;
 
+import dto.DetallePedidoDTO;
 import dto.PedidoProgramadoDTO;
+import persistencia.DAOs.IDetallePedidoDAO;
+import persistencia.DAOs.IPedidoProgramadoDAO;
+import persistencia.DAOs.DetallePedidoDAO;
 import persistencia.DAOs.PedidoProgramadoDAO;
 import persistencia.conexion.IConexionBD;
 import persistencia.dominio.PedidoProgramado;
@@ -15,23 +19,26 @@ import java.time.LocalDate;
  *
  * @author icoro
  */
-public class PedidoProgramadoBO {
+public class PedidoProgramadoBO implements IPedidoProgramadoBO{
     
-    private final PedidoProgramadoDAO pedidoDAO;
+  private final IPedidoProgramadoDAO pedidoDAO;
+    private final IDetallePedidoDAO detalleDAO;
 
     public PedidoProgramadoBO(IConexionBD conexionBD) {
+
         this.pedidoDAO = new PedidoProgramadoDAO(conexionBD);
+        this.detalleDAO = new DetallePedidoDAO(conexionBD);
     }
 
+    @Override
     public void crearPedidoProgramado(PedidoProgramadoDTO dto)
             throws PersistenciaException {
 
-        //validaciones
         if (dto.getSubtotal() < 0)
-            throw new IllegalArgumentException("El subtotal no puede ser negativo");
+            throw new IllegalArgumentException("Subtotal inválido");
 
         if (dto.getTotal() < 0)
-            throw new IllegalArgumentException("El total no puede ser negativo");
+            throw new IllegalArgumentException("Total inválido");
 
         if (dto.getIdCliente() <= 0)
             throw new IllegalArgumentException("Cliente inválido");
@@ -39,8 +46,8 @@ public class PedidoProgramadoBO {
         if (dto.getIdEmpleado() <= 0)
             throw new IllegalArgumentException("Empleado inválido");
 
-        // construir entidad
         PedidoProgramado pedido = new PedidoProgramado();
+
         pedido.setFechaCreacion(LocalDate.now());
         pedido.setEstado("Pendiente");
         pedido.setSubtotal(dto.getSubtotal());
@@ -50,7 +57,14 @@ public class PedidoProgramadoBO {
         pedido.setIdCliente(dto.getIdCliente());
         pedido.setIdCupon(dto.getIdCupon());
 
-        // llamar al DAO
+        // INSERTA PEDIDO + PROGRAMADO (SP)
         pedidoDAO.insertar(pedido);
+
+        int idPedido = pedido.getIdPedido();
+
+        //  INSERTA DETALLE_PEDIDO
+        for (DetallePedidoDTO d : dto.getDetalles()) {
+            detalleDAO.insertar(idPedido, d);
+        }
     }
 }
