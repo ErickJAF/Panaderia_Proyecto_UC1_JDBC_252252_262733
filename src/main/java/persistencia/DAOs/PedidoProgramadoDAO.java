@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import persistencia.conexion.IConexionBD;
 import persistencia.dominio.PedidoProgramado;
 import persistencia.excepciones.PersistenciaException;
+import java.sql.CallableStatement;
 
 /**
  *
@@ -55,53 +56,39 @@ public class PedidoProgramadoDAO implements IPedidoProgramadoDAO {
 
     @Override
     public void insertar(PedidoProgramado pedido) throws PersistenciaException {
-
-        String sqlPedido = """
-            INSERT INTO PEDIDO
-            (fecha_creacion, estado, subtotal, descuento, total, id_empleado)
-            VALUES (?, ?, ?, ?, ?, ?)
-            """;
-
-        String sqlProgramado = """
-            INSERT INTO PROGRAMADO
-            (id_pedido, id_cliente, id_cupon)
-            VALUES (?, ?, ?)
-            """;
-
-        try (Connection conn = conexionBD.crearConexion()) {
-
-            PreparedStatement psPedido = conn.prepareStatement(sqlPedido, PreparedStatement.RETURN_GENERATED_KEYS);
-
-            psPedido.setDate(1, java.sql.Date.valueOf(pedido.getFechaCreacion()));
-            psPedido.setString(2, pedido.getEstado());
-            psPedido.setDouble(3, pedido.getSubtotal());
-            psPedido.setDouble(4, pedido.getDescuento());
-            psPedido.setDouble(5, pedido.getTotal());
-            psPedido.setInt(6, pedido.getIdEmpleado());
-
-            psPedido.executeUpdate();
-
-            ResultSet rs = psPedido.getGeneratedKeys();
-            if (rs.next()) {
-                pedido.setIdPedido(rs.getInt(1));
+        
+        String sql = "{CALL sp_crear_pedido_programado(?,?,?,?,?,?,?,?)}";
+     
+        try(Connection conn = conexionBD.crearConexion()){
+            
+            conn.setAutoCommit(false); //iniciar transaccion
+            try(CallableStatement cs = conn.prepareCall(sql)){
+            
+             cs.setDate(1, java.sql.Date.valueOf(pedido.getFechaCreacion()));
+            cs.setString(2, pedido.getEstado());
+            cs.setDouble(3, pedido.getSubtotal());
+            cs.setDouble(4, pedido.getDescuento());
+            cs.setDouble(5, pedido.getTotal());
+            cs.setInt(6, pedido.getIdEmpleado());
+            cs.setInt(7, pedido.getIdCliente());
+            
+                if (pedido.getIdCupon() != null) {
+                    cs.setInt(8, pedido.getIdCupon());
+                }else{
+                    cs.setNull(8, Types.INTEGER);
+                  }
+                cs.execute();
+                conn.commit(); //confirmar transaccion
+                
+            }catch(SQLException e){
+                conn.rollback();
+                throw e;
             }
-
-            PreparedStatement psProg = conn.prepareStatement(sqlProgramado);
-
-            psProg.setInt(1, pedido.getIdPedido());
-            psProg.setInt(2, pedido.getIdCliente());
-
-            if (pedido.getIdCupon() != null) {
-                psProg.setInt(3, pedido.getIdCupon());
-            } else {
-                psProg.setNull(3, Types.INTEGER);
+                
+            }catch(SQLException ex){
+                throw new PersistenciaException("Error al insertar pedido programado", ex);
             }
-
-            psProg.executeUpdate();
-
-        } catch (SQLException ex) {
-            throw new PersistenciaException("Error al insertar pedido programado", ex);
-        }
+        
     }
 
     @Override
