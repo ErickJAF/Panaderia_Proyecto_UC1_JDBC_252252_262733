@@ -13,7 +13,7 @@ import java.sql.SQLException;
  * @author ERICK
  */
 public class ConexionBD implements IConexionBD {
-    private final String CADENA_CONEXION = "jdbc:mysql://localhost:3306/soporte";
+    private final String CADENA_CONEXION = "jdbc:mysql://localhost:3306/sistema_panaderia";
     private final String USUARIO = "root";
     private final String CONTRASENIA = "itson";
 

@@ -4,26 +4,28 @@
  */
 package persistencia.dominio;
 
+import java.time.LocalDate;
+
 /**
  *
  * @author ERICK
  */
-public class PedidoProgramado {
-     private int idPedido;
+public class PedidoProgramado extends Pedido{
     private int idCliente;
     private Integer idCupon;
 
     public PedidoProgramado() {
     }
 
-    public PedidoProgramado(int idPedido, int idCliente, Integer idCupon) {
-        this.idPedido = idPedido;
+    public PedidoProgramado(int idCliente, Integer idCupon) {
         this.idCliente = idCliente;
         this.idCupon = idCupon;
     }
 
-    public int getIdPedido() {
-        return idPedido;
+    public PedidoProgramado(int idCliente, Integer idCupon, int idPedido, LocalDate fechaCreacion, String estado, double subtotal, float descuento, double total, int idEmpleado) {
+        super(idPedido, fechaCreacion, estado, subtotal, descuento, total, idEmpleado);
+        this.idCliente = idCliente;
+        this.idCupon = idCupon;
     }
 
     public int getIdCliente() {
@@ -32,10 +34,6 @@ public class PedidoProgramado {
 
     public Integer getIdCupon() {
         return idCupon;
-    }
-
-    public void setIdPedido(int idPedido) {
-        this.idPedido = idPedido;
     }
 
     public void setIdCliente(int idCliente) {
@@ -48,6 +46,6 @@ public class PedidoProgramado {
 
     @Override
     public String toString() {
-        return "PedidoProgramado{" + "idPedido=" + idPedido + ", idCliente=" + idCliente + ", idCupon=" + idCupon + '}';
+        return "PedidoProgramado{" + ", idCliente=" + idCliente + ", idCupon=" + idCupon + '}';
     }
 }
