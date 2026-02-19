@@ -1,6 +1,7 @@
 package presentacion;
 
 import negocio.DTOs.ProductoDTO;
+import negocio.DTOs.DetallePedidoDTO;
 import negocio.BOs.IProductoBO;
 import persistencia.conexion.IConexionBD;
 import persistencia.excepciones.PersistenciaException;
@@ -10,6 +11,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 
 public class FrmCrearPedidoProgramado extends JFrame {
@@ -24,6 +26,11 @@ public class FrmCrearPedidoProgramado extends JFrame {
     private List<ProductoDTO> productos;
     private final IProductoBO productoBO;
 
+    private ProductoDTO productoSeleccionado;
+    private List<DetallePedidoDTO> detallesPedido = new ArrayList<>();
+    private DefaultListModel<String> modeloLista = new DefaultListModel<>();
+    private JList<String> listaDetalles;
+
     public FrmCrearPedidoProgramado(IConexionBD conexionBD, IProductoBO productoBO) {
         this.productoBO = productoBO;
         inicializar();
@@ -32,7 +39,7 @@ public class FrmCrearPedidoProgramado extends JFrame {
 
     private void inicializar() {
         setTitle("Productos Disponibles");
-        setSize(1000, 550);
+        setSize(1050, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
@@ -117,6 +124,20 @@ public class FrmCrearPedidoProgramado extends JFrame {
         btnFinalizar.setFocusPainted(false);
         gbc.gridx = 1;
         panelDetalles.add(btnFinalizar, gbc);
+
+        listaDetalles = new JList<>(modeloLista);
+        listaDetalles.setBorder(BorderFactory.createTitledBorder("Detalles del pedido"));
+        listaDetalles.setVisibleRowCount(10);
+        JScrollPane scrollLista = new JScrollPane(listaDetalles);
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        panelDetalles.add(scrollLista, gbc);
+
+        btnAgregar.addActionListener(e -> agregarDetalle());
     }
 
     private void cargarProductos() {
@@ -172,11 +193,41 @@ public class FrmCrearPedidoProgramado extends JFrame {
     }
 
     private void mostrarDetallesProducto(ProductoDTO p) {
+        productoSeleccionado = p;
         lblNombre.setText("Nombre: " + p.getNombre());
         lblPrecio.setText("Precio: $" + p.getPrecio());
         lblDescripcion.setText("<html>Descripción: " + (p.getDescripcion() != null ? p.getDescripcion() : "Sin descripción") + "</html>");
         txtCantidad.setText("1");
         txtNota.setText("");
         txtCupon.setText("");
+    }
+
+    private void agregarDetalle() {
+        if (productoSeleccionado == null) {
+            JOptionPane.showMessageDialog(this, "Seleccione un producto primero");
+            return;
+        }
+
+        try {
+            int cantidad = Integer.parseInt(txtCantidad.getText());
+            if (cantidad <= 0) throw new NumberFormatException();
+
+            String nota = txtNota.getText();
+
+            DetallePedidoDTO detalle = new DetallePedidoDTO(
+                    productoSeleccionado.getIdProducto(),
+                    cantidad,
+                    productoSeleccionado.getPrecio(),
+                    nota
+            );
+
+            detallesPedido.add(detalle);
+            modeloLista.addElement(productoSeleccionado.getNombre() + " x" + cantidad + (nota.isBlank() ? "" : " [" + nota + "]"));
+
+            JOptionPane.showMessageDialog(this, "Producto agregado al pedido");
+
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Cantidad inválida");
+        }
     }
 }
