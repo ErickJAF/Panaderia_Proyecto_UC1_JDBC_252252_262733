@@ -4,7 +4,7 @@
  */
 package persistencia.DAOs;
 
-import dto.ProductoDTO;
+import negocio.DTOs.ProductoDTO;
 import java.util.List;
 import persistencia.dominio.Producto;
 import persistencia.excepciones.PersistenciaException;

@@ -4,7 +4,7 @@
  */
 package persistencia.DAOs;
 
-import dto.ProductoDTO;
+import negocio.DTOs.ProductoDTO;
 import java.sql.*;
 import java.util.*;
 import persistencia.conexion.IConexionBD;
@@ -25,7 +25,7 @@ public class ProductoDAO implements IProductoDAO{
     public List<ProductoDTO> obtenerDisponibles() throws PersistenciaException {
 
       String sql = """
-        SELECT id_producto, nombre, precio
+        SELECT id_producto, nombre, descripcion, precio
         FROM PRODUCTO
         WHERE disponible = 1
     """;
@@ -41,6 +41,7 @@ public class ProductoDAO implements IProductoDAO{
             ProductoDTO p = new ProductoDTO(
                     rs.getInt("id_producto"),
                     rs.getString("nombre"),
+                    rs.getString("descripcion"),
                     rs.getDouble("precio")
             );
 

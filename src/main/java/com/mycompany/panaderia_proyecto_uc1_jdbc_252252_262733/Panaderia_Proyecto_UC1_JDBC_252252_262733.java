@@ -8,8 +8,8 @@ import persistencia.conexion.ConexionBD;
 import persistencia.conexion.IConexionBD;
 import persistencia.DAOs.ProductoDAO;
 import persistencia.DAOs.IProductoDAO;
-import negocio.ProductoBO;
-import negocio.IProductoBO;
+import negocio.BOs.ProductoBO;
+import negocio.BOs.IProductoBO;
 import presentacion.FrmCrearPedidoProgramado;
 
 /**

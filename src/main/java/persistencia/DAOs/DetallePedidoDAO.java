@@ -4,7 +4,7 @@
  */
 package persistencia.DAOs;
 
-import dto.DetallePedidoDTO;
+import negocio.DTOs.DetallePedidoDTO;
 import java.sql.*;
 import persistencia.conexion.IConexionBD;
 import persistencia.excepciones.PersistenciaException;

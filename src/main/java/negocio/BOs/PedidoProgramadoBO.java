@@ -2,10 +2,10 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package negocio;
+package negocio.BOs;
 
-import dto.DetallePedidoDTO;
-import dto.PedidoProgramadoDTO;
+import negocio.DTOs.DetallePedidoDTO;
+import negocio.DTOs.PedidoProgramadoDTO;
 import persistencia.DAOs.IDetallePedidoDAO;
 import persistencia.DAOs.IPedidoProgramadoDAO;
 import persistencia.DAOs.DetallePedidoDAO;

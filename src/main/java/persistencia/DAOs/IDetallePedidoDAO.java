@@ -4,7 +4,7 @@
  */
 package persistencia.DAOs;
 
-import dto.DetallePedidoDTO;
+import negocio.DTOs.DetallePedidoDTO;
 import persistencia.excepciones.PersistenciaException;
 
 /**
