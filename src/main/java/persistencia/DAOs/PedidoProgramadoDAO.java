@@ -59,10 +59,9 @@ public class PedidoProgramadoDAO implements IPedidoProgramadoDAO {
         
         String sql = "{CALL sp_crear_pedido_programado(?,?,?,?,?,?,?,?)}";
      
-        try(Connection conn = conexionBD.crearConexion()){
-            
-            conn.setAutoCommit(false); //iniciar transaccion
-            try(CallableStatement cs = conn.prepareCall(sql)){
+        try(Connection conn = conexionBD.crearConexion();
+    
+            CallableStatement cs = conn.prepareCall(sql)){
             
              cs.setDate(1, java.sql.Date.valueOf(pedido.getFechaCreacion()));
             cs.setString(2, pedido.getEstado());
@@ -77,17 +76,17 @@ public class PedidoProgramadoDAO implements IPedidoProgramadoDAO {
                 }else{
                     cs.setNull(8, Types.INTEGER);
                   }
+                cs.registerOutParameter(9, Types.INTEGER);
                 cs.execute();
-                conn.commit(); //confirmar transaccion
                 
+                int idGenerado = cs.getInt(9);
+                pedido.setIdEmpleado(idGenerado);
             }catch(SQLException e){
-                conn.rollback();
-                throw e;
+                throw new PersistenciaException("Error al insertar pedido",e);
+                
             }
                 
-            }catch(SQLException ex){
-                throw new PersistenciaException("Error al insertar pedido programado", ex);
-            }
+            
         
     }
 
