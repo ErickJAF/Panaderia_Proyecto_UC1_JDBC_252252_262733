@@ -33,26 +33,11 @@ CREATE TABLE PRODUCTO (
     disponible BOOLEAN NOT NULL
 );
 
--- =========================
--- TABLA INGREDIENTE
--- =========================
-CREATE TABLE INGREDIENTE (
-    id_ingrediente INT AUTO_INCREMENT PRIMARY KEY,
-    nombre VARCHAR(60) NOT NULL
-);
-
-CREATE TABLE PRODUCTO_INGREDIENTE (
-    id_producto INT,
-    id_ingrediente INT,
-    PRIMARY KEY (id_producto, id_ingrediente),
-    FOREIGN KEY (id_producto) REFERENCES PRODUCTO(id_producto),
-    FOREIGN KEY (id_ingrediente) REFERENCES INGREDIENTE(id_ingrediente)
-);
-
 CREATE TABLE PEDIDO (
     id_pedido INT AUTO_INCREMENT PRIMARY KEY,
-    fecha_creacion DATE NOT NULL,
-    estado ENUM('Pendiente', 'En Preparación', 'Listo', 'Entregado', 'Cancelado', 'No Reclamado') NOT NULL DEFAULT 'Pendiente',
+    fecha_creacion DATETIME NOT NULL,
+    estado ENUM('Pendiente', 'Listo', 'Entregado', 'Cancelado', 'No Entregado') 
+        NOT NULL DEFAULT 'Pendiente',
     subtotal DECIMAL(10,2) NOT NULL CHECK (subtotal >= 0),
     descuento DECIMAL(10,2) NOT NULL DEFAULT 0 CHECK (descuento >= 0),
     total DECIMAL(10,2) NOT NULL CHECK (total >= 0),
@@ -82,9 +67,9 @@ CREATE TABLE PROGRAMADO (
 
 CREATE TABLE EXPRESS (
     id_pedido INT PRIMARY KEY,
-    folio VARCHAR(20) NOT NULL,
+    folio INT NOT NULL UNIQUE,
     pin_seguridad VARCHAR(255) NOT NULL,
-    fecha_preparacion DATE NOT NULL,
+    fecha_listo DATETIME NOT NULL,
     FOREIGN KEY (id_pedido) REFERENCES PEDIDO(id_pedido)
 );
 
@@ -101,10 +86,19 @@ CREATE TABLE DETALLE_PEDIDO (
 
 CREATE TABLE PAGO (
     id_pago INT AUTO_INCREMENT PRIMARY KEY,
-    fecha_pago DATE NOT NULL,
+    fecha_pago DATETIME NOT NULL,
     monto DECIMAL(10,2) NOT NULL CHECK (monto >= 0),
     metodo_pago VARCHAR(30) NOT NULL,
+    id_pedido INT NOT NULL UNIQUE,
+    FOREIGN KEY (id_pedido) REFERENCES PEDIDO(id_pedido)
+);
+
+CREATE TABLE HISTORIAL_ESTADO (
+    id_historial INT AUTO_INCREMENT PRIMARY KEY,
     id_pedido INT NOT NULL,
+    estado_anterior ENUM('Pendiente', 'Listo', 'Entregado', 'Cancelado', 'No Entregado'),
+    estado_nuevo ENUM('Pendiente', 'Listo', 'Entregado', 'Cancelado', 'No Entregado'),
+    fecha_cambio DATETIME NOT NULL,
     FOREIGN KEY (id_pedido) REFERENCES PEDIDO(id_pedido)
 );
 
@@ -139,54 +133,6 @@ VALUES
 ('Rollito de Canela', 'Panadería', 'Rollito suave con canela y azúcar', 30.00, TRUE),
 ('Empanada de Fruta', 'Panadería', 'Empanada rellena de fruta natural', 27.00, TRUE);
 
-INSERT INTO INGREDIENTE (nombre)
-VALUES
-('Harina'),
-('Azúcar'),
-('Levadura'),
-('Mantequilla'),
-('Chocolate'),
-('Nuez'),
-('Canela'),
-('Queso'),
-('Fruta'),
-('Leche');
-
-INSERT INTO PRODUCTO_INGREDIENTE (id_producto, id_ingrediente)
-VALUES
-(1, 1),
-(1, 3),
-(1, 2),
-(1,10),
-(2, 1),
-(2, 3),
-(2,10),
-(3, 1),
-(3, 4),
-(3, 2),
-(4, 1),
-(4, 5),
-(4, 2),
-(5, 1),
-(5, 2),
-(5, 3),
-(6, 1),
-(6, 8),
-(6, 3),
-(7, 1),
-(7, 2),
-(7, 4),
-(8, 1),
-(8, 6),
-(8, 3),
-(9, 1),
-(9, 7),
-(9, 2),
-(9, 4),
-(10,1),
-(10,9),
-(10,2);
-
 INSERT INTO CUPON (codigo, descuento, usos_maximos, usos_actuales, activo, fecha_inicio, fecha_fin)
 VALUES
 ('DESC10', 10.00, 100, 0, TRUE, '2025-01-01', '2025-12-31');
@@ -200,9 +146,9 @@ INSERT INTO PROGRAMADO (id_pedido, id_cliente, id_cupon)
 VALUES
 (1, 1, 1);
 
-INSERT INTO EXPRESS (id_pedido, folio, pin_seguridad, fecha_preparacion)
+INSERT INTO EXPRESS (id_pedido, folio, pin_seguridad, fecha_listo)
 VALUES
-(2, 'EXP-001', '1234HASH', CURDATE());
+(2, 1, '1234HASH', NOW());
 
 INSERT INTO DETALLE_PEDIDO (cantidad, nota, precio_unitario, id_pedido, id_producto)
 VALUES
@@ -244,25 +190,18 @@ SELECT SUM(total) AS total_vendido
 FROM PEDIDO
 WHERE estado = 'Entregado' OR estado = 'Listo';
 
--- 5 Ver ingredientes de un producto
-SELECT pr.nombre AS producto, i.nombre AS ingrediente
-FROM PRODUCTO pr
-JOIN PRODUCTO_INGREDIENTE pi ON pr.id_producto = pi.id_producto
-JOIN INGREDIENTE i ON pi.id_ingrediente = i.id_ingrediente
-WHERE pr.id_producto = 1;
-
--- 6 Ver pagos realizados
+-- 5 Ver pagos realizados
 SELECT p.id_pago, p.monto, pe.estado
 FROM PAGO p
 JOIN PEDIDO pe ON p.id_pedido = pe.id_pedido;
 
--- 7 Cantidad de pedidos por cliente
+-- 6 Cantidad de pedidos por cliente
 SELECT c.nombre_completo, COUNT(pe.id_pedido) AS total_pedidos
 FROM CLIENTE c
 LEFT JOIN PROGRAMADO pe ON c.id_cliente = pe.id_cliente
 GROUP BY c.nombre_completo;
 
--- 8 Total vendido por empleado
+-- 7 Total vendido por empleado
 SELECT e.nombre_completo, SUM(p.total) AS total_generado
 FROM EMPLEADO e
 JOIN PEDIDO p ON e.id_empleado = p.id_empleado
@@ -271,7 +210,7 @@ GROUP BY e.nombre_completo;
 DELIMITER //
 
 CREATE PROCEDURE sp_crear_pedido_programado(
-    IN p_fecha DATE,
+    IN p_fecha DATETIME,
     IN p_estado VARCHAR(30),
     IN p_subtotal DECIMAL(10,2),
     IN p_descuento DECIMAL(10,2),
@@ -283,7 +222,6 @@ CREATE PROCEDURE sp_crear_pedido_programado(
 BEGIN
     DECLARE nuevo_id INT;
 
-    -- Si ocurre cualquier error SQL → rollback automático
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
     BEGIN
         ROLLBACK;
@@ -291,7 +229,6 @@ BEGIN
 
     START TRANSACTION;
 
-    -- Insertar en PEDIDO
     INSERT INTO PEDIDO(
         fecha_creacion,
         estado,
@@ -311,7 +248,6 @@ BEGIN
 
     SET nuevo_id = LAST_INSERT_ID();
 
-    -- Insertar en PROGRAMADO
     INSERT INTO PROGRAMADO(
         id_pedido,
         id_cliente,
@@ -324,26 +260,26 @@ BEGIN
     );
 
     COMMIT;
-
 END //
 
-DELIMITER 
-
-CREATE TRIGGER trg_actualizar_usos_cupon
-AFTER INSERT ON PROGRAMADO
+CREATE TRIGGER trg_historial_estado
+BEFORE UPDATE ON PEDIDO
 FOR EACH ROW
 BEGIN
-    IF NEW.id_cupon IS NOT NULL THEN
+    IF OLD.estado <> NEW.estado THEN
         
-        UPDATE CUPON
-        SET usos_actuales = usos_actuales + 1
-        WHERE id_cupon = NEW.id_cupon;
-
-        -- Desactivar si alcanza el máximo
-        UPDATE CUPON
-        SET activo = FALSE
-        WHERE id_cupon = NEW.id_cupon
-        AND usos_actuales >= usos_maximos;
+        INSERT INTO HISTORIAL_ESTADO(
+            id_pedido,
+            estado_anterior,
+            estado_nuevo,
+            fecha_cambio
+        )
+        VALUES(
+            OLD.id_pedido,
+            OLD.estado,
+            NEW.estado,
+            NOW()
+        );
 
     END IF;
 END //
