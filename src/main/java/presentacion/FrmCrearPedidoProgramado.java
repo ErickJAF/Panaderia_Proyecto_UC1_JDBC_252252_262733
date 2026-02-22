@@ -343,7 +343,7 @@ public class FrmCrearPedidoProgramado extends JFrame {
                 detallesPedido
         );
 
-        pedidoBO.crearPedidoProgramado(dto);
+        pedidoBO.registrarPedido(dto);
 
         JOptionPane.showMessageDialog(this,
                 "Pedido guardado correctamente");

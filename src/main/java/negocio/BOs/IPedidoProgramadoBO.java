@@ -6,16 +6,16 @@ package negocio.BOs;
 
 import negocio.DTOs.PedidoProgramadoDTO;
 import negocio.excepciones.NegocioException;
+import persistencia.dominio.PedidoProgramado;
 
 /**
  *
  * @author icoro
  */
 public interface IPedidoProgramadoBO {
+    void registrarPedido(PedidoProgramadoDTO pedido) throws NegocioException;
+
+    void actualizarEstado(int idPedido, String estado) throws NegocioException;
     
-    void crearPedidoProgramado(PedidoProgramadoDTO dto) throws NegocioException;
-
-    void cambiarEstado(int idPedido, String nuevoEstado) throws NegocioException;
-
-    void cancelarPedido(int idPedido) throws NegocioException;
+    PedidoProgramado buscarPorId(int idPedido) throws NegocioException;
 }

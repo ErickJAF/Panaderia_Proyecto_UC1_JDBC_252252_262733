@@ -35,10 +35,8 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO{
     }
 
     @Override
-    public void crearPedidoProgramado(PedidoProgramadoDTO dto)
+    public void registrarPedido(PedidoProgramadoDTO dto)
             throws NegocioException {
-
-        validarDTO(dto);
 
         PedidoProgramado pedido = new PedidoProgramado();
 
@@ -52,12 +50,10 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO{
         pedido.setIdCupon(dto.getIdCupon());
 
         try {
-            // Inserta pedido y obtiene ID generado
             pedidoDAO.insertar(pedido);
 
             int idPedido = pedido.getIdPedido();
 
-            // Insertar detalles
             for (DetallePedidoDTO d : dto.getDetalles()) {
                 detalleDAO.insertar(idPedido, d);
             }
@@ -69,51 +65,67 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO{
     }
 
     @Override
-    public void cambiarEstado(int idPedido, String nuevoEstado)
-            throws NegocioException {
-
-        if (idPedido <= 0)
-            throw new NegocioException("ID de pedido inválido.");
-
-        if (nuevoEstado == null || nuevoEstado.isBlank())
-            throw new NegocioException("Estado inválido.");
+    public void actualizarEstado(int idPedido, String nuevoEstado) throws NegocioException {
+        if (nuevoEstado == null || nuevoEstado.isBlank()) {
+            throw new NegocioException("El estado no puede ser vacío");
+        }
 
         try {
+            PedidoProgramado pedido = pedidoDAO.buscarPorId(idPedido);
+            if (pedido == null) {
+                throw new NegocioException("No se encontró el pedido con ID " + idPedido);
+            }
+
+            String estadoActual = pedido.getEstado();
+
+            switch (nuevoEstado) {
+                case "Listo":
+                    if (!estadoActual.equals("Pendiente")) {
+                        throw new NegocioException("Solo los pedidos Pendientes pueden marcarse como Listo");
+                    }
+                    break;
+
+                case "Entregado":
+                    if (!estadoActual.equals("Listo")) {
+                        throw new NegocioException("Solo los pedidos Listos pueden entregarse");
+                    }
+                    break;
+
+                case "Cancelado":
+                    if (estadoActual.equals("Entregado")) {
+                        throw new NegocioException("No se puede cancelar un pedido ya entregado");
+                    }
+                    break;
+
+                case "No Entregado":
+                    if (!estadoActual.equals("Listo")) {
+                        throw new NegocioException("Solo los pedidos Listos pueden pasar a No Entregado");
+                    }
+                    break;
+
+                default:
+                    throw new NegocioException("Estado no válido: " + nuevoEstado);
+            }
+
             pedidoDAO.actualizarEstado(idPedido, nuevoEstado);
-        } catch (PersistenciaException e) {
-            throw new NegocioException("No se pudo cambiar el estado.", e);
+            LOG.info("Estado actualizado correctamente. ID: " + idPedido + ", Estado final: " + nuevoEstado);
+
+        } catch (PersistenciaException ex) {
+            LOG.severe("Error al actualizar el estado del pedido programado. ID: " + idPedido + ", Error: " + ex.getMessage());
+            throw new NegocioException("Error al actualizar el estado del pedido programado", ex);
         }
     }
 
     @Override
-    public void cancelarPedido(int idPedido) throws NegocioException {
-
-        if (idPedido <= 0)
-            throw new NegocioException("ID inválido.");
-
+    public PedidoProgramado buscarPorId(int idPedido) throws NegocioException {
         try {
-            pedidoDAO.actualizarEstado(idPedido, "Cancelado");
-        } catch (PersistenciaException e) {
-            throw new NegocioException("No se pudo cancelar el pedido.", e);
+            PedidoProgramado pedido = pedidoDAO.buscarPorId(idPedido);
+            if (pedido == null) {
+                throw new NegocioException("No se encontró el pedido con ID " + idPedido);
+            }
+            return pedido;
+        } catch (PersistenciaException ex) {
+            throw new NegocioException("Error al buscar el pedido por ID", ex);
         }
-    }
-
-    private void validarDTO(PedidoProgramadoDTO dto)
-            throws NegocioException {
-
-        if (dto.getSubtotal() < 0)
-            throw new NegocioException("Subtotal inválido.");
-
-        if (dto.getTotal() < 0)
-            throw new NegocioException("Total inválido.");
-
-        if (dto.getIdCliente() <= 0)
-            throw new NegocioException("Cliente inválido.");
-
-        if (dto.getIdEmpleado() <= 0)
-            throw new NegocioException("Empleado inválido.");
-
-        if (dto.getDetalles() == null || dto.getDetalles().isEmpty())
-            throw new NegocioException("El pedido debe tener al menos un detalle.");
     }
 }

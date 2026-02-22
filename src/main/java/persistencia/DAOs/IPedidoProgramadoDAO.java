@@ -13,13 +13,11 @@ import persistencia.excepciones.PersistenciaException;
  * @author ERICK
  */
 public interface IPedidoProgramadoDAO {
-    int obtenerUltimoNumeroPedido() throws PersistenciaException;
-
+    PedidoProgramado buscarPorId(int idPedido) throws PersistenciaException;
+    
     void insertar(PedidoProgramado pedido) throws PersistenciaException;
 
     List<PedidoProgramado> obtenerActivosPorCliente(int idCliente) throws PersistenciaException;
-
-    List<PedidoProgramado> obtenerPorTelefono(String telefono) throws PersistenciaException;
 
     void actualizarEstado(int idPedido, String estado) throws PersistenciaException;
     

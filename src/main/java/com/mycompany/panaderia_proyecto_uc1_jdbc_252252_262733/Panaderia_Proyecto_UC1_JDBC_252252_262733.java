@@ -12,9 +12,13 @@ import negocio.excepciones.NegocioException;
 import java.time.LocalDate;
 import java.util.List;
 import negocio.BOs.IPedidoExpressBO;
+import negocio.BOs.IPedidoProgramadoBO;
 import negocio.BOs.PedidoExpressBO;
+import negocio.BOs.PedidoProgramadoBO;
 import persistencia.DAOs.IPedidoExpressDAO;
+import persistencia.DAOs.IPedidoProgramadoDAO;
 import persistencia.DAOs.PedidoExpressDAO;
+import persistencia.DAOs.PedidoProgramadoDAO;
 
 public class Panaderia_Proyecto_UC1_JDBC_252252_262733 {
 
@@ -170,6 +174,65 @@ public class Panaderia_Proyecto_UC1_JDBC_252252_262733 {
             System.err.println("Error en pruebas PedidoExpressBO: " + ex.getMessage());
             ex.printStackTrace();
         }
+        
+        System.out.println("\n=== Pruebas de PedidoProgramadoBO ===");
+
+    try {
+        IPedidoProgramadoDAO pedidoProgramadoDAO = new PedidoProgramadoDAO(conexionBD);
+        IPedidoProgramadoBO pedidoProgramadoBO = new PedidoProgramadoBO(conexionBD);
+
+        // --- 1️⃣ Buscar un pedido existente por ID
+        int idPedido = 7; // Cambiar según tu BD
+        System.out.println("\n--- Buscar pedido por ID " + idPedido + " ---");
+        try {
+            var pedido = pedidoProgramadoBO.buscarPorId(idPedido);
+            System.out.println("Pedido encontrado: ID=" + pedido.getIdPedido() + ", Estado=" + pedido.getEstado());
+        } catch (NegocioException ex) {
+            System.out.println("Error: " + ex.getMessage());
+        }
+
+        // --- 2️⃣ Intentar actualizar estado a Listo
+        System.out.println("\n--- Actualizar estado a Listo ---");
+        try {
+            pedidoProgramadoBO.actualizarEstado(idPedido, "Listo");
+            System.out.println("Estado actualizado a Listo correctamente.");
+        } catch (NegocioException ex) {
+            System.out.println("Error al actualizar a Listo: " + ex.getMessage());
+        }
+
+        // --- 3️⃣ Intentar actualizar estado a Entregado
+        System.out.println("\n--- Actualizar estado a Entregado ---");
+        try {
+            pedidoProgramadoBO.actualizarEstado(idPedido, "Entregado");
+            System.out.println("Estado actualizado a Entregado correctamente.");
+        } catch (NegocioException ex) {
+            System.out.println("Error al actualizar a Entregado: " + ex.getMessage());
+        }
+
+        // --- 4️⃣ Intentar actualizar estado a Cancelado
+        int idPedidoCancelar = 8; // Asegúrate que esté en estado "Pendiente"
+        System.out.println("\n--- Intentar cancelar pedido ID " + idPedidoCancelar + " ---");
+        try {
+            pedidoProgramadoBO.actualizarEstado(idPedidoCancelar, "Cancelado");
+            System.out.println("Pedido cancelado correctamente.");
+        } catch (NegocioException ex) {
+            System.out.println("No se pudo cancelar: " + ex.getMessage());
+        }
+
+        // --- 5️⃣ Intentar marcar un pedido como No Entregado
+        int idPedidoNoEntregado = 9; // Asegúrate que esté en estado "Listo"
+        System.out.println("\n--- Marcar pedido ID " + idPedidoNoEntregado + " como No Entregado ---");
+        try {
+            pedidoProgramadoBO.actualizarEstado(idPedidoNoEntregado, "No Entregado");
+            System.out.println("Pedido marcado como No Entregado correctamente.");
+        } catch (NegocioException ex) {
+            System.out.println("No se pudo marcar No Entregado: " + ex.getMessage());
+        }
+
+    } catch (Exception ex) {
+        System.err.println("Error en pruebas PedidoProgramadoBO: " + ex.getMessage());
+        ex.printStackTrace();
+    }
     }
 
     private static String formatPedido(PedidoEntregaDTO p) {

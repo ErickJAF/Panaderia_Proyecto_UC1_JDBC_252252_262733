@@ -125,7 +125,6 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
                     p.setFolio(String.valueOf(rs.getInt("folio")));
                     p.setPinEncriptado(rs.getString("pin_seguridad"));
 
-                    // ✅ Manejo seguro de fechaListo
                     Timestamp ts = rs.getTimestamp("fecha_listo");
                     if (ts != null) {
                         p.setFechaListo(ts.toLocalDateTime());

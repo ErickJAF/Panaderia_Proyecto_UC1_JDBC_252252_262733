@@ -32,71 +32,6 @@ public class PedidoProgramadoDAO implements IPedidoProgramadoDAO {
     }
 
     @Override
-    public int obtenerUltimoNumeroPedido() throws PersistenciaException {
-
-        String sql = """
-                SELECT MAX(id_pedido) AS ultimo
-                FROM PEDIDO
-                """;
-
-        try (Connection conn = conexionBD.crearConexion();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            if (rs.next()) {
-                return rs.getInt("ultimo");
-            }
-
-            return 0;
-
-        } catch (SQLException ex) {
-            LOG.log(Level.SEVERE, "Error al obtener último número de pedido", ex);
-            throw new PersistenciaException(
-                    "Error al obtener el último número de pedido", ex);
-        }
-    }
-
-    @Override
-    public void insertar(PedidoProgramado pedido)
-            throws PersistenciaException {
-
-        String sql =
-                "{CALL sp_crear_pedido_programado(?,?,?,?,?,?,?,?,?)}";
-
-        try (Connection conn = conexionBD.crearConexion();
-             CallableStatement cs = conn.prepareCall(sql)) {
-
-            cs.setDate(1,
-                    java.sql.Date.valueOf(pedido.getFechaCreacion()));
-            cs.setString(2, pedido.getEstado());
-            cs.setDouble(3, pedido.getSubtotal());
-            cs.setDouble(4, pedido.getDescuento());
-            cs.setDouble(5, pedido.getTotal());
-            cs.setInt(6, pedido.getIdEmpleado());
-            cs.setInt(7, pedido.getIdCliente());
-
-            if (pedido.getIdCupon() != null) {
-                cs.setInt(8, pedido.getIdCupon());
-            } else {
-                cs.setNull(8, Types.INTEGER);
-            }
-
-            cs.registerOutParameter(9, Types.INTEGER);
-
-            cs.execute();
-
-            int idGenerado = cs.getInt(9);
-
-            pedido.setIdPedido(idGenerado);
-
-        } catch (SQLException e) {
-            LOG.log(Level.SEVERE, "Error al insertar pedido", e);
-            throw new PersistenciaException(
-                    "Error al insertar pedido", e);
-        }
-    }
-
-    @Override
     public List<PedidoProgramado> obtenerActivosPorCliente(int idCliente)
             throws PersistenciaException {
 
@@ -131,91 +66,6 @@ public class PedidoProgramadoDAO implements IPedidoProgramadoDAO {
     }
 
     @Override
-    public List<PedidoProgramado> obtenerPorTelefono(String telefono)
-            throws PersistenciaException {
-
-        String sql = """
-                SELECT p.*, pr.id_cliente, pr.id_cupon
-                FROM PEDIDO p
-                JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
-                JOIN TELEFONO t ON pr.id_cliente = t.id_cliente
-                WHERE t.numero = ? AND p.estado = 'Pendiente'
-                """;
-
-        List<PedidoProgramado> lista = new ArrayList<>();
-
-        try (Connection conn = conexionBD.crearConexion();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, telefono);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    lista.add(extraerPedido(rs));
-                }
-            }
-
-            return lista;
-
-        } catch (SQLException ex) {
-            LOG.log(Level.SEVERE,
-                    "Error al obtener pedidos por teléfono", ex);
-            throw new PersistenciaException(
-                    "Error al obtener pedidos por teléfono", ex);
-        }
-    }
-
-    @Override
-    public void actualizarEstado(int idPedido, String estado)
-            throws PersistenciaException {
-
-        String sql = """
-                UPDATE PEDIDO
-                SET estado = ?
-                WHERE id_pedido = ?
-                """;
-
-        try (Connection conn = conexionBD.crearConexion();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, estado);
-            ps.setInt(2, idPedido);
-
-            if (ps.executeUpdate() == 0) {
-                throw new PersistenciaException(
-                        "No se encontró el pedido.");
-            }
-
-        } catch (SQLException ex) {
-            LOG.log(Level.SEVERE,
-                    "Error al actualizar estado del pedido", ex);
-            throw new PersistenciaException(
-                    "Error al actualizar estado del pedido", ex);
-        }
-    }
-
-    private PedidoProgramado extraerPedido(ResultSet rs)
-            throws SQLException {
-
-        PedidoProgramado p = new PedidoProgramado();
-
-        p.setIdPedido(rs.getInt("id_pedido"));
-        p.setFechaCreacion(
-                rs.getDate("fecha_creacion").toLocalDate());
-        p.setEstado(rs.getString("estado"));
-        p.setSubtotal(rs.getDouble("subtotal"));
-        p.setDescuento(rs.getFloat("descuento"));
-        p.setTotal(rs.getDouble("total"));
-        p.setIdEmpleado(rs.getInt("id_empleado"));
-        p.setIdCliente(rs.getInt("id_cliente"));
-
-        int idCupon = rs.getInt("id_cupon");
-        p.setIdCupon(rs.wasNull() ? null : idCupon);
-
-        return p;
-    }
-
-    @Override
     public List<PedidoProgramado> obtenerPendientes() throws PersistenciaException {
         String sql = """
             SELECT p.*, pr.id_cliente, pr.id_cupon
@@ -237,5 +87,122 @@ public class PedidoProgramadoDAO implements IPedidoProgramadoDAO {
         } catch (SQLException ex) {
             throw new PersistenciaException("Error al obtener pedidos pendientes", ex);
         }
+    }
+    
+    @Override
+    public void insertar(PedidoProgramado pedido) throws PersistenciaException {
+        String sql = "{CALL sp_crear_pedido_programado(?,?,?,?,?,?,?,?,?)}";
+
+        try (Connection conn = conexionBD.crearConexion();
+             CallableStatement cs = conn.prepareCall(sql)) {
+
+            cs.setDate(1, java.sql.Date.valueOf(pedido.getFechaCreacion()));
+            cs.setString(2, pedido.getEstado());
+            cs.setDouble(3, pedido.getSubtotal());
+            cs.setDouble(4, pedido.getDescuento());
+            cs.setDouble(5, pedido.getTotal());
+            cs.setInt(6, pedido.getIdEmpleado());
+            cs.setInt(7, pedido.getIdCliente());
+
+            if (pedido.getIdCupon() != null) {
+                cs.setInt(8, pedido.getIdCupon());
+            } else {
+                cs.setNull(8, Types.INTEGER);
+            }
+
+            cs.registerOutParameter(9, Types.INTEGER);
+
+            cs.execute();
+
+            int idGenerado = cs.getInt(9);
+            pedido.setIdPedido(idGenerado);
+
+            LOG.info("Pedido programado insertado correctamente. ID: " + idGenerado);
+
+        } catch (SQLException e) {
+            LOG.log(Level.SEVERE, "Error al insertar pedido programado", e);
+            throw new PersistenciaException("Error al insertar pedido programado", e);
+        }
+    }
+
+    @Override
+    public void actualizarEstado(int idPedido, String estado) throws PersistenciaException {
+        String sql = "UPDATE PEDIDO SET estado = ? WHERE id_pedido = ?";
+
+        try (Connection conn = conexionBD.crearConexion();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, estado);
+            ps.setInt(2, idPedido);
+
+            int filasAfectadas = ps.executeUpdate();
+            if (filasAfectadas == 0) {
+                throw new PersistenciaException("No se encontró el pedido para actualizar");
+            }
+
+            LOG.info("Estado del pedido programado actualizado correctamente. ID: " + idPedido + ", Nuevo Estado: " + estado);
+
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "Error al actualizar estado del pedido programado. ID: " + idPedido, ex);
+            throw new PersistenciaException("Error al actualizar estado del pedido programado", ex);
+        }
+    }
+
+    @Override
+    public PedidoProgramado buscarPorId(int idPedido) throws PersistenciaException {
+        String sql = """
+            SELECT p.id_pedido, p.fecha_creacion, p.estado, p.total, pr.id_cliente
+            FROM PEDIDO p
+            JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
+            WHERE p.id_pedido = ?
+        """;
+
+        try (Connection conn = conexionBD.crearConexion();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idPedido);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    PedidoProgramado pedido = new PedidoProgramado();
+                    pedido.setIdPedido(rs.getInt("id_pedido"));
+                    pedido.setFechaCreacion(rs.getDate("fecha_creacion").toLocalDate());
+                    pedido.setEstado(rs.getString("estado"));
+                    pedido.setTotal(rs.getDouble("total"));
+                    pedido.setIdCliente(rs.getInt("id_cliente"));
+
+                    LOG.info("Pedido programado encontrado. ID: " + idPedido + ", Estado: " + pedido.getEstado());
+                    return pedido;
+                } else {
+                    LOG.warning("No se encontró pedido programado con ID: " + idPedido);
+                    return null;
+                }
+            }
+
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "Error al buscar pedido programado por ID: " + idPedido, ex);
+            throw new PersistenciaException("Error al buscar pedido programado por ID", ex);
+        }
+    }
+    
+    private PedidoProgramado extraerPedido(ResultSet rs)
+            throws SQLException {
+
+        PedidoProgramado p = new PedidoProgramado();
+
+        p.setIdPedido(rs.getInt("id_pedido"));
+        p.setFechaCreacion(
+                rs.getDate("fecha_creacion").toLocalDate());
+        p.setEstado(rs.getString("estado"));
+        p.setSubtotal(rs.getDouble("subtotal"));
+        p.setDescuento(rs.getFloat("descuento"));
+        p.setTotal(rs.getDouble("total"));
+        p.setIdEmpleado(rs.getInt("id_empleado"));
+        p.setIdCliente(rs.getInt("id_cliente"));
+
+        int idCupon = rs.getInt("id_cupon");
+        p.setIdCupon(rs.wasNull() ? null : idCupon);
+
+        return p;
     }
 }

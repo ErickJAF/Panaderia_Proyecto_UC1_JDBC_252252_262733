@@ -119,8 +119,10 @@ public class PedidoExpressBO implements IPedidoExpressBO {
                 pedidoDAO.actualizarFechaListo(idPedido, LocalDateTime.now());
             }
             pedidoDAO.actualizarEstado(idPedido, nuevoEstado);
-
+            LOG.info("Estado actualizado correctamente. ID: " + idPedido + ", Estado final: " + nuevoEstado);
+            
         } catch (PersistenciaException ex) {
+            LOG.severe("Error al actualizar el estado del pedido express. ID: " + idPedido + ", Error: " + ex.getMessage());
             throw new NegocioException("Error al actualizar el estado del pedido", ex);
         }
     }

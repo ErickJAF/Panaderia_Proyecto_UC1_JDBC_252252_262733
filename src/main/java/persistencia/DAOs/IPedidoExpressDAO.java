@@ -24,5 +24,4 @@ public interface IPedidoExpressDAO {
     List<PedidoExpressDTO> obtenerPendientes() throws PersistenciaException;
     
     void actualizarFechaListo(int idPedido, LocalDateTime fecha) throws PersistenciaException;
-
 }

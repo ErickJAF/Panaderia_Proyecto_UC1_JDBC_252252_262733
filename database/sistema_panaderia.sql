@@ -176,6 +176,43 @@ VALUES
 (CURDATE(), 165.00, 'Tarjeta', 1),
 (CURDATE(), 95.00, 'Efectivo', 2);
 
+INSERT INTO PEDIDO (fecha_creacion, estado, subtotal, descuento, total, id_empleado)
+VALUES
+(CURDATE(), 'Pendiente', 120.00, 10.00, 110.00, 1),
+(CURDATE(), 'Pendiente', 85.00, 5.00, 80.00, 2),
+(CURDATE(), 'Pendiente', 150.00, 15.00, 135.00, 1),
+(CURDATE(), 'Pendiente', 60.00, 0.00, 60.00, 2),
+(CURDATE(), 'Pendiente', 200.00, 20.00, 180.00, 1);
+
+INSERT INTO PROGRAMADO (id_pedido, id_cliente, id_cupon)
+VALUES
+(7, 1, 1),
+(8, 2, 1),
+(9, 1, 1),
+(10, 2, 1),
+(11, 1, 1);
+
+INSERT INTO DETALLE_PEDIDO (cantidad, nota, precio_unitario, id_pedido, id_producto)
+VALUES
+(2, '', 40.00, 7, 1),
+(1, '', 25.00, 7, 2),
+(1, 'Extra mantequilla', 30.00, 8, 3),
+(2, '', 20.00, 8, 5),
+(1, '', 28.00, 9, 6),
+(2, '', 25.00, 9, 7),
+(2, '', 30.00, 10, 9),
+(1, '', 27.00, 10, 10),
+(3, 'Sin azúcar', 35.00, 11, 4),
+(2, '', 32.00, 11, 8);
+
+INSERT INTO PAGO (fecha_pago, monto, metodo_pago, id_pedido)
+VALUES
+(CURDATE(), 110.00, 'Efectivo', 7),
+(CURDATE(), 80.00, 'Tarjeta', 8),
+(CURDATE(), 135.00, 'Tarjeta', 9),
+(CURDATE(), 60.00, 'Efectivo', 10),
+(CURDATE(), 180.00, 'Tarjeta', 11);
+
 -- CONSULTAS DE PRUEBA
 
 -- 1 Ver pedidos con su empleado
@@ -217,7 +254,7 @@ GROUP BY e.nombre_completo;
 
 -- 8 Pedidos pendientes
 SELECT * 
-FROM EXPRESS;
+FROM programado;
 
 DELIMITER //
 
