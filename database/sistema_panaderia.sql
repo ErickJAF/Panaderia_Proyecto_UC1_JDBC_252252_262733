@@ -209,6 +209,7 @@ GROUP BY e.nombre_completo;
 
 DELIMITER //
 
+-- SP
 CREATE PROCEDURE sp_crear_pedido_programado(
     IN p_fecha DATETIME,
     IN p_estado VARCHAR(30),
@@ -217,7 +218,8 @@ CREATE PROCEDURE sp_crear_pedido_programado(
     IN p_total DECIMAL(10,2),
     IN p_id_empleado INT,
     IN p_id_cliente INT,
-    IN p_id_cupon INT
+    IN p_id_cupon INT,
+    OUT p_id_generado INT
 )
 BEGIN
     DECLARE nuevo_id INT;
@@ -259,15 +261,17 @@ BEGIN
         p_id_cupon
     );
 
+    SET p_id_generado = nuevo_id;
+
     COMMIT;
 END //
 
+-- Trigger
 CREATE TRIGGER trg_historial_estado
 BEFORE UPDATE ON PEDIDO
 FOR EACH ROW
 BEGIN
     IF OLD.estado <> NEW.estado THEN
-        
         INSERT INTO HISTORIAL_ESTADO(
             id_pedido,
             estado_anterior,
@@ -280,8 +284,13 @@ BEGIN
             NEW.estado,
             NOW()
         );
-
     END IF;
 END //
 
 DELIMITER ;
+
+UPDATE PEDIDO
+SET estado = 'Entregado'
+WHERE id_pedido = 1;
+
+SELECT * FROM HISTORIAL_ESTADO;

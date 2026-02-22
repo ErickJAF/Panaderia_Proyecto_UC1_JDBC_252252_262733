@@ -14,7 +14,7 @@ import persistencia.excepciones.PersistenciaException;
  * @author icoro
  */
 public class DetallePedidoDAO implements IDetallePedidoDAO{
-      private final IConexionBD conexion;
+    private final IConexionBD conexion;
 
     public DetallePedidoDAO(IConexionBD conexion) {
         this.conexion = conexion;

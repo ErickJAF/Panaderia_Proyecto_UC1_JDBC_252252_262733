@@ -4,14 +4,13 @@
  */
 package negocio.BOs;
 
-import negocio.DTOs.ProductoDTO;
-import java.util.List;
 import negocio.excepciones.NegocioException;
+import persistencia.excepciones.PersistenciaException;
 
 /**
  *
- * @author icoro
+ * @author ERICK
  */
-public interface IProductoBO {
-    List<ProductoDTO> obtenerDisponibles() throws NegocioException;
+public interface IGestionEntregasBO {
+    public void cambiarEstadoPedido(int idPedido, String nuevoEstado) throws NegocioException;
 }

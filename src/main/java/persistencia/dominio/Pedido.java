@@ -87,6 +87,16 @@ public class Pedido {
     public void setIdEmpleado(int idEmpleado) {
         this.idEmpleado = idEmpleado;
     }
+    
+    public boolean estaListo() {
+        return "Listo".equalsIgnoreCase(this.estado);
+    }
+
+    public boolean estaFinalizado() {
+        return "Entregado".equalsIgnoreCase(this.estado)
+                || "Cancelado".equalsIgnoreCase(this.estado)
+                || "No Entregado".equalsIgnoreCase(this.estado);
+    }
 
     @Override
     public String toString() {

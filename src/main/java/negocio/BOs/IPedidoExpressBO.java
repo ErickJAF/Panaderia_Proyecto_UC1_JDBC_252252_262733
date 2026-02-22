@@ -4,18 +4,19 @@
  */
 package negocio.BOs;
 
-import negocio.DTOs.PedidoProgramadoDTO;
 import negocio.excepciones.NegocioException;
+import persistencia.dominio.PedidoExpress;
 
 /**
  *
- * @author icoro
+ * @author ERICK
  */
-public interface IPedidoProgramadoBO {
-    
-    void crearPedidoProgramado(PedidoProgramadoDTO dto) throws NegocioException;
+public interface IPedidoExpressBO {
+    void registrarPedido(PedidoExpress pedido) throws NegocioException;
 
-    void cambiarEstado(int idPedido, String nuevoEstado) throws NegocioException;
+    void validarTiempoEntrega(PedidoExpress pedido) throws NegocioException;
+
+    void entregarPedido(PedidoExpress pedido) throws NegocioException;
 
     void cancelarPedido(int idPedido) throws NegocioException;
 }

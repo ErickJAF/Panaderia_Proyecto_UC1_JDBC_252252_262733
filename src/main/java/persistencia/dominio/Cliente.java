@@ -12,6 +12,8 @@ import java.time.LocalDate;
  */
 public class Cliente extends Usuario {
 
+    private int idCliente;
+    private String nombreCompleto;
     private LocalDate fechaNacimiento;
     private String calle;
     private String colonia;
@@ -20,19 +22,33 @@ public class Cliente extends Usuario {
     public Cliente() {
     }
 
-    public Cliente(LocalDate fechaNacimiento, String calle, String colonia, int numero, int idUsuario, String nombreCompleto, String rol) {
-        super(idUsuario, nombreCompleto, rol);
+    public Cliente(String nombreCompleto, LocalDate fechaNacimiento,
+                   String calle, String colonia, int numero) {
+        this.nombreCompleto = nombreCompleto;
         this.fechaNacimiento = fechaNacimiento;
         this.calle = calle;
         this.colonia = colonia;
         this.numero = numero;
     }
 
-    public Cliente(LocalDate fechaNacimiento, String calle, String colonia, int numero) {
+    public Cliente(int idCliente, String nombreCompleto,
+                   LocalDate fechaNacimiento,
+                   String calle, String colonia, int numero) {
+
+        this.idCliente = idCliente;
+        this.nombreCompleto = nombreCompleto;
         this.fechaNacimiento = fechaNacimiento;
         this.calle = calle;
         this.colonia = colonia;
         this.numero = numero;
+    }
+
+    public int getIdCliente() {
+        return idCliente;
+    }
+
+    public String getNombreCompleto() {
+        return nombreCompleto;
     }
 
     public LocalDate getFechaNacimiento() {
@@ -49,6 +65,14 @@ public class Cliente extends Usuario {
 
     public int getNumero() {
         return numero;
+    }
+
+    public void setIdCliente(int idCliente) {
+        this.idCliente = idCliente;
+    }
+
+    public void setNombreCompleto(String nombreCompleto) {
+        this.nombreCompleto = nombreCompleto;
     }
 
     public void setFechaNacimiento(LocalDate fechaNacimiento) {
@@ -69,6 +93,6 @@ public class Cliente extends Usuario {
 
     @Override
     public String toString() {
-        return "Cliente{" + "fechaNacimiento=" + fechaNacimiento + ", calle=" + calle + ", colonia=" + colonia + ", numero=" + numero + '}';
+        return "Cliente{" + "idCliente=" + idCliente + ", nombreCompleto=" + nombreCompleto + ", fechaNacimiento=" + fechaNacimiento + ", calle=" + calle + ", colonia=" + colonia + ", numero=" + numero + '}';
     }
 }
