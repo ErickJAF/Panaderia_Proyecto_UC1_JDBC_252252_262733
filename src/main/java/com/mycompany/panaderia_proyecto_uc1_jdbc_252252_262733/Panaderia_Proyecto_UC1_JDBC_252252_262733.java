@@ -16,7 +16,10 @@ import negocio.BOs.IPedidoExpressBO;
 import negocio.BOs.IPedidoProgramadoBO;
 import negocio.BOs.PedidoExpressBO;
 import negocio.BOs.PedidoProgramadoBO;
+import negocio.DTOs.DetallePedidoDTO;
 import negocio.DTOs.HistorialEstadoDTO;
+import negocio.DTOs.PedidoExpressDTO;
+import negocio.DTOs.PedidoProgramadoDTO;
 import persistencia.DAOs.HistorialEstadoDAO;
 import persistencia.DAOs.IHistorialEstadoDAO;
 import persistencia.DAOs.IPedidoExpressDAO;
@@ -141,6 +144,27 @@ public class Panaderia_Proyecto_UC1_JDBC_252252_262733 {
             } catch (NegocioException ex) {
                 System.out.println("No se pudo marcar No Entregado: " + ex.getMessage());
             }
+            
+            PedidoExpressDTO pedido = pedidoExpressBO.buscarPorIdDTO(2);
+
+            System.out.println("===== PEDIDO EXPRESS =====");
+            System.out.println("ID Pedido: " + pedido.getIdPedido());
+            System.out.println("Folio: " + pedido.getFolio());
+            System.out.println("PIN Encriptado: " + pedido.getPinEncriptado());
+            System.out.println("Subtotal: " + pedido.getSubtotal());
+            System.out.println("Total: " + pedido.getTotal());
+            System.out.println("Estado: " + pedido.getEstado());
+            System.out.println("Fecha Creación: " + pedido.getFechaCreacion());
+
+            System.out.println("\n--- DETALLES ---");
+
+            for (DetallePedidoDTO detalle : pedido.getDetalles()) {
+                System.out.println("Producto ID: " + detalle.getIdProducto());
+                System.out.println("Cantidad: " + detalle.getCantidad());
+                System.out.println("Precio Unitario: " + detalle.getPrecioUnitario());
+                System.out.println("Nota: " + detalle.getNota());
+                System.out.println("----------------------------");
+            }
 
         } catch (Exception ex) {
             System.err.println("Error en pruebas PedidoExpressBO: " + ex.getMessage());
@@ -233,7 +257,27 @@ public class Panaderia_Proyecto_UC1_JDBC_252252_262733 {
                 System.out.println("No se pudo marcar No Entregado: " + ex.getMessage());
             }
 
-        } catch (Exception ex) {
+            PedidoProgramadoDTO pedido = pedidoProgramadoBO.buscarPorIdDTO(1);
+
+            System.out.println("===== PEDIDO PROGRAMADO =====");
+            System.out.println("Cliente ID: " + pedido.getIdCliente());
+            System.out.println("Empleado ID: " + pedido.getIdEmpleado());
+            System.out.println("Subtotal: " + pedido.getSubtotal());
+            System.out.println("Descuento: " + pedido.getDescuento());
+            System.out.println("Total: " + pedido.getTotal());
+            System.out.println("Cupón: " + pedido.getIdCupon());
+
+            System.out.println("\n--- DETALLES ---");
+
+            for (DetallePedidoDTO detalle : pedido.getDetalles()) {
+                System.out.println("Producto ID: " + detalle.getIdProducto());
+                System.out.println("Cantidad: " + detalle.getCantidad());
+                System.out.println("Precio Unitario: " + detalle.getPrecioUnitario());
+                System.out.println("Nota: " + detalle.getNota());
+                System.out.println("----------------------------");
+            }
+
+        } catch (NegocioException ex) {
             System.err.println("Error en pruebas PedidoProgramadoBO: " + ex.getMessage());
             ex.printStackTrace();
         }

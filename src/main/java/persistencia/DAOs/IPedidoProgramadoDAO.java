@@ -5,6 +5,7 @@
 package persistencia.DAOs;
 
 import java.util.List;
+import negocio.DTOs.PedidoProgramadoDTO;
 import persistencia.dominio.PedidoProgramado;
 import persistencia.excepciones.PersistenciaException;
 
@@ -14,6 +15,7 @@ import persistencia.excepciones.PersistenciaException;
  */
 public interface IPedidoProgramadoDAO {
     PedidoProgramado buscarPorId(int idPedido) throws PersistenciaException;
+    PedidoProgramadoDTO buscarPorIdDTO(int idPedido) throws PersistenciaException;
     
     void insertar(PedidoProgramado pedido) throws PersistenciaException;
 

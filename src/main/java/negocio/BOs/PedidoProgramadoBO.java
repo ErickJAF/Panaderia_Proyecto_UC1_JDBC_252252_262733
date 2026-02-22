@@ -120,4 +120,26 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO{
             throw new NegocioException("Error al buscar el pedido por ID", ex);
         }
     }
+
+    @Override
+    public PedidoProgramadoDTO buscarPorIdDTO(int idPedido) throws NegocioException {
+
+        if (idPedido <= 0) {
+            throw new NegocioException("El ID del pedido no es válido");
+        }
+
+        try {
+
+            PedidoProgramadoDTO pedido = pedidoDAO.buscarPorIdDTO(idPedido);
+
+            if (pedido == null) {
+                throw new NegocioException("No se encontró el pedido programado");
+            }
+
+            return pedido;
+
+        } catch (PersistenciaException ex) {
+            throw new NegocioException("Error al buscar el pedido programado", ex);
+        }
+    }
 }

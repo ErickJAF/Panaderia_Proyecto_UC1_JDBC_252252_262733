@@ -5,6 +5,7 @@
 package negocio.DTOs;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  *
@@ -14,27 +15,31 @@ public class PedidoExpressDTO {
     private int idPedido;
     private int folio;
     private String pinEncriptado;
-    private String nombreCliente;
-    private String telefonoCliente;
     private double subtotal;
     private double total;
     private String estado;
     private LocalDateTime fechaCreacion;
+    private List<DetallePedidoDTO> detalles;
 
     public PedidoExpressDTO() {}
 
-    public PedidoExpressDTO(int idPedido, int folio, String pinEncriptado, String nombreCliente,
-                             String telefonoCliente, double subtotal, double total,
-                             String estado, LocalDateTime fechaCreacion) {
+    public PedidoExpressDTO(int idPedido,
+                            int folio,
+                            String pinEncriptado,
+                            double subtotal,
+                            double total,
+                            String estado,
+                            LocalDateTime fechaCreacion,
+                            List<DetallePedidoDTO> detalles) {
+
         this.idPedido = idPedido;
         this.folio = folio;
         this.pinEncriptado = pinEncriptado;
-        this.nombreCliente = nombreCliente;
-        this.telefonoCliente = telefonoCliente;
         this.subtotal = subtotal;
         this.total = total;
         this.estado = estado;
         this.fechaCreacion = fechaCreacion;
+        this.detalles = detalles;
     }
 
     public int getIdPedido() {
@@ -59,22 +64,6 @@ public class PedidoExpressDTO {
 
     public void setPinEncriptado(String pinEncriptado) {
         this.pinEncriptado = pinEncriptado;
-    }
-
-    public String getNombreCliente() {
-        return nombreCliente;
-    }
-
-    public void setNombreCliente(String nombreCliente) {
-        this.nombreCliente = nombreCliente;
-    }
-
-    public String getTelefonoCliente() {
-        return telefonoCliente;
-    }
-
-    public void setTelefonoCliente(String telefonoCliente) {
-        this.telefonoCliente = telefonoCliente;
     }
 
     public double getSubtotal() {
@@ -107,5 +96,9 @@ public class PedidoExpressDTO {
 
     public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
+    }
+    
+    public List<DetallePedidoDTO> getDetalles() {
+        return detalles;
     }
 }

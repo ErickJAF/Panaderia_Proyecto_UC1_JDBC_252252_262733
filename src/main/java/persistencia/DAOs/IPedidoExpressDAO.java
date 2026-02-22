@@ -20,6 +20,7 @@ public interface IPedidoExpressDAO {
     void actualizarEstado(int idPedido, String estado) throws PersistenciaException;
     
     PedidoExpress buscarPorId(int idPedido) throws PersistenciaException;
+    PedidoExpressDTO buscarPorIdDTO(int idPedido) throws PersistenciaException;
     
     List<PedidoExpressDTO> obtenerPendientes() throws PersistenciaException;
     

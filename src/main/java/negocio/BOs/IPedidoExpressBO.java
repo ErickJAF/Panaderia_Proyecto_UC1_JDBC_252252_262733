@@ -4,6 +4,7 @@
  */
 package negocio.BOs;
 
+import negocio.DTOs.PedidoExpressDTO;
 import negocio.excepciones.NegocioException;
 import persistencia.dominio.PedidoExpress;
 
@@ -20,4 +21,5 @@ public interface IPedidoExpressBO {
     void actualizarEstado(int idPedido, String estado) throws NegocioException;
     
     PedidoExpress buscarPorId(int idPedido) throws NegocioException;
+    PedidoExpressDTO buscarPorIdDTO(int idPedido) throws NegocioException;
 }

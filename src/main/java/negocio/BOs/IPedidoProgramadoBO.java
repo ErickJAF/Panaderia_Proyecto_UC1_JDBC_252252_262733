@@ -18,4 +18,5 @@ public interface IPedidoProgramadoBO {
     void actualizarEstado(int idPedido, String estado) throws NegocioException;
     
     PedidoProgramado buscarPorId(int idPedido) throws NegocioException;
+    PedidoProgramadoDTO buscarPorIdDTO(int idPedido) throws NegocioException;
 }

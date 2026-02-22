@@ -9,9 +9,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import negocio.DTOs.PedidoExpressDTO;
 import negocio.excepciones.NegocioException;
 import persistencia.DAOs.IPedidoExpressDAO;
-import persistencia.DAOs.PedidoExpressDAO;
 import persistencia.dominio.PedidoExpress;
 import persistencia.excepciones.PersistenciaException;
 
@@ -137,6 +137,28 @@ public class PedidoExpressBO implements IPedidoExpressBO {
             return pedido;
         } catch (PersistenciaException ex) {
             throw new NegocioException("Error al buscar el pedido por ID", ex);
+        }
+    }
+
+    @Override
+    public PedidoExpressDTO buscarPorIdDTO(int idPedido) throws NegocioException {
+
+        if (idPedido <= 0) {
+            throw new NegocioException("El id del pedido es inválido.");
+        }
+
+        try {
+
+            PedidoExpressDTO pedido = pedidoDAO.buscarPorIdDTO(idPedido);
+
+            if (pedido == null) {
+                throw new NegocioException("No se encontró el pedido express con id: " + idPedido);
+            }
+
+            return pedido;
+
+        } catch (PersistenciaException ex) {
+            throw new NegocioException("Error al buscar el pedido express.", ex);
         }
     }
 }

@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import negocio.DTOs.DetallePedidoDTO;
 import negocio.DTOs.PedidoExpressDTO;
 import persistencia.conexion.IConexionBD;
 import persistencia.dominio.PedidoExpress;
@@ -147,7 +148,7 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
     @Override
     public List<PedidoExpressDTO> obtenerPendientes() throws PersistenciaException {
         String sql = """
-            SELECT e.id_pedido, e.folio, e.pin_seguridad, c.nombre_completo, t.numero,
+            SELECT e.id_pedido, e.folio, e.pin_seguridad,
                    p.subtotal, p.total, p.estado, p.fecha_creacion
             FROM PEDIDO p
             JOIN EXPRESS e ON p.id_pedido = e.id_pedido
@@ -167,8 +168,6 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
                 dto.setIdPedido(rs.getInt("id_pedido"));
                 dto.setFolio(rs.getInt("folio"));
                 dto.setPinEncriptado(rs.getString("pin_seguridad"));
-                dto.setNombreCliente(rs.getString("nombre_completo"));
-                dto.setTelefonoCliente(rs.getString("numero"));
                 dto.setSubtotal(rs.getDouble("subtotal"));
                 dto.setTotal(rs.getDouble("total"));
                 dto.setEstado(rs.getString("estado"));
@@ -203,5 +202,95 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
             LOG.log(Level.SEVERE, "Error al actualizar fechaListo", ex);
             throw new PersistenciaException("Error al actualizar fechaListo", ex);
         }
+    }
+    
+    @Override
+    public PedidoExpressDTO buscarPorIdDTO(int idPedido) throws PersistenciaException {
+
+        String sql = """
+            SELECT 
+                pe.folio,
+                p.subtotal,
+                p.total,
+                p.estado,
+                p.fecha_creacion,
+                pe.pin_seguridad
+            FROM PEDIDO p
+            JOIN EXPRESS pe ON p.id_pedido = pe.id_pedido
+            WHERE p.id_pedido = ?
+        """;
+
+        try (Connection conn = conexionBD.crearConexion();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idPedido);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                if (!rs.next()) {
+                    return null;
+                }
+
+                int folio = rs.getInt("folio");
+                String pin = rs.getString("pin_seguridad");
+                double subtotal = rs.getDouble("subtotal");
+                double total = rs.getDouble("total");
+                String estado = rs.getString("estado");
+                LocalDateTime fechaCreacion =
+                        rs.getTimestamp("fecha_creacion").toLocalDateTime();
+
+                List<DetallePedidoDTO> detalles = obtenerDetalles(conn, idPedido);
+
+                return new PedidoExpressDTO(
+                        idPedido,
+                        folio,
+                        pin,
+                        subtotal,
+                        total,
+                        estado,
+                        fechaCreacion,
+                        detalles
+                );
+            }
+
+        } catch (SQLException ex) {
+            throw new PersistenciaException("Error al buscar PedidoExpressDTO", ex);
+        }
+    }
+
+    private List<DetallePedidoDTO> obtenerDetalles(Connection conn, int idPedido) throws SQLException {
+
+        String sql = """
+            SELECT id_producto,
+                   cantidad,
+                   precio_unitario,
+                   nota
+            FROM DETALLE_PEDIDO
+            WHERE id_pedido = ?
+        """;
+
+        List<DetallePedidoDTO> lista = new ArrayList<>();
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idPedido);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                while (rs.next()) {
+
+                    DetallePedidoDTO detalle = new DetallePedidoDTO(
+                            rs.getInt("id_producto"),
+                            rs.getInt("cantidad"),
+                            rs.getDouble("precio_unitario"),
+                            rs.getString("nota")
+                    );
+
+                    lista.add(detalle);
+                }
+            }
+        }
+
+        return lista;
     }
 }

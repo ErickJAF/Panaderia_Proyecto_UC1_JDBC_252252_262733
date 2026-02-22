@@ -17,6 +17,8 @@ import persistencia.conexion.IConexionBD;
 import persistencia.dominio.PedidoProgramado;
 import persistencia.excepciones.PersistenciaException;
 import java.sql.CallableStatement;
+import negocio.DTOs.DetallePedidoDTO;
+import negocio.DTOs.PedidoProgramadoDTO;
 
 /**
  *
@@ -204,5 +206,96 @@ public class PedidoProgramadoDAO implements IPedidoProgramadoDAO {
         p.setIdCupon(rs.wasNull() ? null : idCupon);
 
         return p;
+    }
+
+    @Override
+    public PedidoProgramadoDTO buscarPorIdDTO(int idPedido) throws PersistenciaException {
+
+        String sql = """
+            SELECT 
+                pr.id_cliente,
+                p.id_empleado,
+                p.subtotal,
+                p.descuento,
+                p.total,
+                pr.id_cupon
+            FROM PEDIDO p
+            JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
+            WHERE p.id_pedido = ?
+        """;
+
+        try (Connection conn = conexionBD.crearConexion();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idPedido);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                if (!rs.next()) {
+                    return null;
+                }
+
+                int idCliente = rs.getInt("id_cliente");
+                int idEmpleado = rs.getInt("id_empleado");
+                double subtotal = rs.getDouble("subtotal");
+                double descuento = rs.getDouble("descuento");
+                double total = rs.getDouble("total");
+
+                Integer idCupon = rs.getObject("id_cupon") != null
+                        ? rs.getInt("id_cupon")
+                        : null;
+
+                List<DetallePedidoDTO> detalles = obtenerDetalles(conn, idPedido);
+
+                return new PedidoProgramadoDTO(
+                        idCliente,
+                        idEmpleado,
+                        subtotal,
+                        descuento,
+                        total,
+                        idCupon,
+                        detalles
+                );
+            }
+
+        } catch (SQLException ex) {
+            throw new PersistenciaException("Error al buscar PedidoProgramadoDTO", ex);
+        }
+    }
+    
+    private List<DetallePedidoDTO> obtenerDetalles(Connection conn, int idPedido) throws SQLException {
+
+        String sql = """
+            SELECT id_producto,
+                   cantidad,
+                   precio_unitario,
+                   nota
+            FROM DETALLE_PEDIDO
+            WHERE id_pedido = ?
+        """;
+
+        List<DetallePedidoDTO> lista = new ArrayList<>();
+
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idPedido);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                while (rs.next()) {
+
+                    DetallePedidoDTO detalle = new DetallePedidoDTO(
+                            rs.getInt("id_producto"),
+                            rs.getInt("cantidad"),
+                            rs.getDouble("precio_unitario"),
+                            rs.getString("nota")
+                    );
+
+                    lista.add(detalle);
+                }
+            }
+        }
+
+        return lista;
     }
 }
