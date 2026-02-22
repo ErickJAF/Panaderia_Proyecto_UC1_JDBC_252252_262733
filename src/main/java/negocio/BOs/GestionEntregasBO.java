@@ -8,9 +8,10 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.logging.Logger;
+import negocio.excepciones.NegocioException;
 import persistencia.DAOs.PedidoDAO;
 import persistencia.conexion.IConexionBD;
-import persistencia.excepciones.PersistenciaException;
+
 
 /**
  *
@@ -27,7 +28,7 @@ public class GestionEntregasBO implements IGestionEntregasBO{
 
     @Override
     public void cambiarEstadoPedido(int idPedido, String nuevoEstado)
-            throws PersistenciaException {
+            throws NegocioException {
 
         String sql = """
             UPDATE PEDIDO
@@ -43,7 +44,7 @@ public class GestionEntregasBO implements IGestionEntregasBO{
             ps.executeUpdate();
 
         } catch (SQLException ex) {
-            throw new PersistenciaException(
+            throw new NegocioException(
                     "Error al cambiar estado del pedido", ex);
         }
     }
