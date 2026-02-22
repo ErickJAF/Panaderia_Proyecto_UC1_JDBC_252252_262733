@@ -4,12 +4,15 @@
 
 package com.mycompany.panaderia_proyecto_uc1_jdbc_252252_262733;
 
+import negocio.BOs.IPedidoProgramadoBO;
 import persistencia.conexion.ConexionBD;
 import persistencia.conexion.IConexionBD;
 import persistencia.DAOs.ProductoDAO;
 import persistencia.DAOs.IProductoDAO;
 import negocio.BOs.ProductoBO;
 import negocio.BOs.IProductoBO;
+import negocio.BOs.PedidoProgramadoBO;
+import negocio.excepciones.NegocioException;
 import presentacion.FrmCrearPedidoProgramado;
 
 /**
@@ -18,22 +21,35 @@ import presentacion.FrmCrearPedidoProgramado;
  */
 public class Panaderia_Proyecto_UC1_JDBC_252252_262733 {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NegocioException {
       
     
-IConexionBD conexion = new ConexionBD();
+// CONEXIÓN
+        IConexionBD conexion = new ConexionBD();
 
-// DAO
-IProductoDAO productoDAO = new ProductoDAO(conexion);
+        // DAO
+        IProductoDAO productoDAO = new ProductoDAO(conexion);
 
-// BO
-IProductoBO productoBO = new ProductoBO(productoDAO);
+        // BO PRODUCTO
+        IProductoBO productoBO = new ProductoBO(productoDAO);
 
-// FORM
-FrmCrearPedidoProgramado frm =
-        new FrmCrearPedidoProgramado(conexion, productoBO);
+        // BO PEDIDO PROGRAMADO
+        IPedidoProgramadoBO pedidoBO = new PedidoProgramadoBO(conexion);
 
-frm.setVisible(true);
+        // Simulación usuario logueado
+        int idEmpleado = 1;
+        int idCliente = 1;
 
+        FrmCrearPedidoProgramado frm =
+                new FrmCrearPedidoProgramado(
+                        conexion,
+                        productoBO,
+                        pedidoBO,
+                        idEmpleado,
+                        idCliente
+                );
+
+        frm.setVisible(true);
     }
 }
+

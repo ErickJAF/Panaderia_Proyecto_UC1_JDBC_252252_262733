@@ -4,7 +4,7 @@ import negocio.DTOs.ProductoDTO;
 import negocio.DTOs.DetallePedidoDTO;
 import negocio.BOs.IProductoBO;
 import persistencia.conexion.IConexionBD;
-import persistencia.excepciones.PersistenciaException;
+
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -13,8 +13,14 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import negocio.BOs.IPedidoProgramadoBO;
+import negocio.DTOs.PedidoProgramadoDTO;
+import negocio.excepciones.NegocioException;
 
 public class FrmCrearPedidoProgramado extends JFrame {
+    private final IPedidoProgramadoBO pedidoBO;
+    private final int idEmpleado;
+    private final int idCliente;
 
     private JPanel panelProductos;
     private JPanel panelDetalles;
@@ -31,11 +37,22 @@ public class FrmCrearPedidoProgramado extends JFrame {
     private DefaultListModel<String> modeloLista = new DefaultListModel<>();
     private JList<String> listaDetalles;
 
-    public FrmCrearPedidoProgramado(IConexionBD conexionBD, IProductoBO productoBO) {
-        this.productoBO = productoBO;
-        inicializar();
-        cargarProductos();
-    }
+    public FrmCrearPedidoProgramado(
+        IConexionBD conexionBD,
+        IProductoBO productoBO,
+        IPedidoProgramadoBO pedidoBO,
+        int idEmpleado,
+        int idCliente
+) throws NegocioException {
+
+    this.productoBO = productoBO;
+    this.pedidoBO = pedidoBO;
+    this.idEmpleado = idEmpleado;
+    this.idCliente = idCliente;
+
+    inicializar();
+    cargarProductos();
+}
 
     private void inicializar() {
         setTitle("Productos Disponibles");
@@ -138,9 +155,10 @@ public class FrmCrearPedidoProgramado extends JFrame {
         panelDetalles.add(scrollLista, gbc);
 
         btnAgregar.addActionListener(e -> agregarDetalle());
+        btnFinalizar.addActionListener(e -> finalizarPedido());
     }
 
-    private void cargarProductos() {
+    private void cargarProductos() throws NegocioException {
         try {
             productos = productoBO.obtenerDisponibles();
             panelProductos.removeAll();
@@ -186,7 +204,7 @@ public class FrmCrearPedidoProgramado extends JFrame {
             panelProductos.revalidate();
             panelProductos.repaint();
 
-        } catch (PersistenciaException e) {
+        } catch (NegocioException e) {
             JOptionPane.showMessageDialog(this, "No se pudieron cargar los productos:\n" + e.getMessage(),
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
@@ -230,4 +248,122 @@ public class FrmCrearPedidoProgramado extends JFrame {
             JOptionPane.showMessageDialog(this, "Cantidad inválida");
         }
     }
+
+    private void finalizarPedido() {
+    if (detallesPedido.isEmpty()) {
+        JOptionPane.showMessageDialog(this, 
+            "Agrega al menos un producto al pedido");
+        return;
+    }
+
+    double subtotal = calcularSubtotal();
+    double descuento = 0;
+
+    // Aquí después validaremos cupón real desde BO
+    if (!txtCupon.getText().isBlank()) {
+        descuento = 10; // temporal para pruebas
+    }
+
+    double total = subtotal - descuento;
+
+    mostrarResumenPedido(subtotal, descuento, total);
+}
+    private void mostrarResumenPedido(double subtotal, double descuento, double total) {
+
+    JDialog dialogo = new JDialog(this, "Resumen del Pedido", true);
+    dialogo.setSize(400, 500);
+    dialogo.setLocationRelativeTo(this);
+    dialogo.setLayout(new BorderLayout());
+
+    JTextArea areaResumen = new JTextArea();
+    areaResumen.setEditable(false);
+
+    StringBuilder sb = new StringBuilder();
+    sb.append("Productos:\n\n");
+
+    for (DetallePedidoDTO d : detallesPedido) {
+    String nombre = productos.stream()
+            .filter(p -> p.getIdProducto() == d.getIdProducto())
+            .findFirst()
+            .map(ProductoDTO::getNombre)
+            .orElse("Producto");
+
+    sb.append("- ")
+      .append(nombre)
+      .append(" x")
+      .append(d.getCantidad())
+      .append("  $")
+      .append(d.getCantidad() * d.getPrecioUnitario())
+      .append("\n");
+}
+
+    sb.append("\n-------------------------\n");
+    sb.append("Subtotal: $").append(subtotal).append("\n");
+    sb.append("Descuento: $").append(descuento).append("\n");
+    sb.append("TOTAL: $").append(total).append("\n");
+
+    areaResumen.setText(sb.toString());
+
+    JButton btnConfirmar = new JButton("Confirmar Pedido");
+    btnConfirmar.setBackground(new Color(40, 167, 69));
+    btnConfirmar.setForeground(Color.WHITE);
+
+    btnConfirmar.addActionListener(e -> {
+        guardarPedidoEnBD(subtotal, descuento, total);
+        dialogo.dispose();
+    });
+
+    dialogo.add(new JScrollPane(areaResumen), BorderLayout.CENTER);
+    dialogo.add(btnConfirmar, BorderLayout.SOUTH);
+
+    dialogo.setVisible(true);
+}
+
+    private double calcularSubtotal() {
+    double subtotal = 0;
+
+    for (DetallePedidoDTO d : detallesPedido) {
+        subtotal += d.getCantidad() * d.getPrecioUnitario();
+    }
+
+    return subtotal;
+}
+
+  private void guardarPedidoEnBD(double subtotal, double descuento, double total) {
+
+    try {
+
+        PedidoProgramadoDTO dto = new PedidoProgramadoDTO(
+                idCliente,
+                idEmpleado,
+                subtotal,
+                descuento,
+                total,
+                txtCupon.getText().isBlank() ? null : 1,
+                detallesPedido
+        );
+
+        pedidoBO.crearPedidoProgramado(dto);
+
+        JOptionPane.showMessageDialog(this,
+                "Pedido guardado correctamente");
+
+        limpiarFormulario();
+
+    } catch (NegocioException ex) {
+        JOptionPane.showMessageDialog(this,
+                ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+    }
+}
+   private void limpiarFormulario() {
+    detallesPedido.clear();
+    modeloLista.clear();
+    txtCupon.setText("");
+    lblNombre.setText("Nombre:");
+    lblPrecio.setText("Precio:");
+    lblDescripcion.setText("Descripción:");
+}
+
 }
