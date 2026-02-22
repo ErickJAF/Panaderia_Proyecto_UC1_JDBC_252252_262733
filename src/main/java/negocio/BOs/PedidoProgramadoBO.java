@@ -4,13 +4,8 @@
  */
 package negocio.BOs;
 
-import negocio.DTOs.DetallePedidoDTO;
 import negocio.DTOs.PedidoProgramadoDTO;
-import persistencia.DAOs.IDetallePedidoDAO;
 import persistencia.DAOs.IPedidoProgramadoDAO;
-import persistencia.DAOs.DetallePedidoDAO;
-import persistencia.DAOs.PedidoProgramadoDAO;
-import persistencia.conexion.IConexionBD;
 import persistencia.dominio.PedidoProgramado;
 import java.time.LocalDate;
 import java.util.logging.Logger;
@@ -24,14 +19,11 @@ import persistencia.excepciones.PersistenciaException;
 public class PedidoProgramadoBO implements IPedidoProgramadoBO{
     
     private final IPedidoProgramadoDAO pedidoDAO;
-    private final IDetallePedidoDAO detalleDAO;
 
-    private static final Logger LOG =
-            Logger.getLogger(PedidoProgramadoBO.class.getName());
+    private static final Logger LOG = Logger.getLogger(PedidoProgramadoBO.class.getName());
 
-    public PedidoProgramadoBO(IConexionBD conexionBD) {
-        this.pedidoDAO = new PedidoProgramadoDAO(conexionBD);
-        this.detalleDAO = new DetallePedidoDAO(conexionBD);
+    public PedidoProgramadoBO(IPedidoProgramadoDAO pedidoDAO) {
+        this.pedidoDAO = pedidoDAO;
     }
 
     @Override
@@ -54,9 +46,9 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO{
 
             int idPedido = pedido.getIdPedido();
 
-            for (DetallePedidoDTO d : dto.getDetalles()) {
-                detalleDAO.insertar(idPedido, d);
-            }
+//            for (DetallePedidoDTO d : dto.getDetalles()) {
+//                detalleDAO.insertar(idPedido, d);
+//            }
 
         } catch (PersistenciaException e) {
             LOG.severe("Error al crear pedido programado");

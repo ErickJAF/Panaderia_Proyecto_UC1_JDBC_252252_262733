@@ -4,7 +4,9 @@
  */
 package persistencia.DAOs;
 
+import java.time.LocalDate;
 import java.util.List;
+import negocio.DTOs.HistorialEstadoDTO;
 import persistencia.dominio.HistorialEstado;
 import persistencia.excepciones.PersistenciaException;
 
@@ -14,4 +16,12 @@ import persistencia.excepciones.PersistenciaException;
  */
 public interface IHistorialEstadoDAO {
     List<HistorialEstado> obtenerHistorialPorPedido(int idPedido) throws PersistenciaException;
+    
+    List<HistorialEstadoDTO> obtenerPedidosPorEstado(String estado) throws PersistenciaException;
+
+    List<HistorialEstadoDTO> buscarPorTelefono(String telefono) throws PersistenciaException;
+
+    List<HistorialEstadoDTO> buscarPorRangoFechas(LocalDate inicio, LocalDate fin) throws PersistenciaException;
+    
+    List<HistorialEstadoDTO> buscarPorFolio(int folio) throws PersistenciaException;
 }

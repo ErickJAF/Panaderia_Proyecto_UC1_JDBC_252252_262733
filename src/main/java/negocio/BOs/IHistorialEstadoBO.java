@@ -4,7 +4,9 @@
  */
 package negocio.BOs;
 
+import java.time.LocalDate;
 import java.util.List;
+import negocio.DTOs.HistorialEstadoDTO;
 import negocio.excepciones.NegocioException;
 import persistencia.dominio.HistorialEstado;
 
@@ -14,4 +16,12 @@ import persistencia.dominio.HistorialEstado;
  */
 public interface IHistorialEstadoBO {
     List<HistorialEstado> obtenerHistorialPorPedido(int idPedido) throws NegocioException;
+    
+    List<HistorialEstadoDTO> obtenerPedidosPorEstado(String estado) throws NegocioException;
+
+    List<HistorialEstadoDTO> buscarPorTelefono(String telefono) throws NegocioException;
+
+    List<HistorialEstadoDTO> buscarPorRangoFechas(LocalDate inicio, LocalDate fin) throws NegocioException;
+    
+    List<HistorialEstadoDTO> buscarPorFolio(int folio) throws NegocioException;
 }

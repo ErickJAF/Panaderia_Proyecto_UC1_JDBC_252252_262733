@@ -11,10 +11,14 @@ import negocio.excepciones.NegocioException;
 
 import java.time.LocalDate;
 import java.util.List;
+import negocio.BOs.HistorialEstadoBO;
 import negocio.BOs.IPedidoExpressBO;
 import negocio.BOs.IPedidoProgramadoBO;
 import negocio.BOs.PedidoExpressBO;
 import negocio.BOs.PedidoProgramadoBO;
+import negocio.DTOs.HistorialEstadoDTO;
+import persistencia.DAOs.HistorialEstadoDAO;
+import persistencia.DAOs.IHistorialEstadoDAO;
 import persistencia.DAOs.IPedidoExpressDAO;
 import persistencia.DAOs.IPedidoProgramadoDAO;
 import persistencia.DAOs.PedidoExpressDAO;
@@ -177,62 +181,118 @@ public class Panaderia_Proyecto_UC1_JDBC_252252_262733 {
         
         System.out.println("\n=== Pruebas de PedidoProgramadoBO ===");
 
-    try {
-        IPedidoProgramadoDAO pedidoProgramadoDAO = new PedidoProgramadoDAO(conexionBD);
-        IPedidoProgramadoBO pedidoProgramadoBO = new PedidoProgramadoBO(conexionBD);
-
-        // --- 1️⃣ Buscar un pedido existente por ID
-        int idPedido = 7; // Cambiar según tu BD
-        System.out.println("\n--- Buscar pedido por ID " + idPedido + " ---");
         try {
-            var pedido = pedidoProgramadoBO.buscarPorId(idPedido);
-            System.out.println("Pedido encontrado: ID=" + pedido.getIdPedido() + ", Estado=" + pedido.getEstado());
-        } catch (NegocioException ex) {
-            System.out.println("Error: " + ex.getMessage());
-        }
+            IPedidoProgramadoDAO pedidoProgramadoDAO = new PedidoProgramadoDAO(conexionBD);
+            IPedidoProgramadoBO pedidoProgramadoBO = new PedidoProgramadoBO(pedidoProgramadoDAO);
 
-        // --- 2️⃣ Intentar actualizar estado a Listo
-        System.out.println("\n--- Actualizar estado a Listo ---");
+            // --- 1️⃣ Buscar un pedido existente por ID
+            int idPedido = 7; // Cambiar según tu BD
+            System.out.println("\n--- Buscar pedido por ID " + idPedido + " ---");
+            try {
+                var pedido = pedidoProgramadoBO.buscarPorId(idPedido);
+                System.out.println("Pedido encontrado: ID=" + pedido.getIdPedido() + ", Estado=" + pedido.getEstado());
+            } catch (NegocioException ex) {
+                System.out.println("Error: " + ex.getMessage());
+            }
+
+            // --- 2️⃣ Intentar actualizar estado a Listo
+            System.out.println("\n--- Actualizar estado a Listo ---");
+            try {
+                pedidoProgramadoBO.actualizarEstado(idPedido, "Listo");
+                System.out.println("Estado actualizado a Listo correctamente.");
+            } catch (NegocioException ex) {
+                System.out.println("Error al actualizar a Listo: " + ex.getMessage());
+            }
+
+            // --- 3️⃣ Intentar actualizar estado a Entregado
+            System.out.println("\n--- Actualizar estado a Entregado ---");
+            try {
+                pedidoProgramadoBO.actualizarEstado(idPedido, "Entregado");
+                System.out.println("Estado actualizado a Entregado correctamente.");
+            } catch (NegocioException ex) {
+                System.out.println("Error al actualizar a Entregado: " + ex.getMessage());
+            }
+
+            // --- 4️⃣ Intentar actualizar estado a Cancelado
+            int idPedidoCancelar = 8; // Asegúrate que esté en estado "Pendiente"
+            System.out.println("\n--- Intentar cancelar pedido ID " + idPedidoCancelar + " ---");
+            try {
+                pedidoProgramadoBO.actualizarEstado(idPedidoCancelar, "Cancelado");
+                System.out.println("Pedido cancelado correctamente.");
+            } catch (NegocioException ex) {
+                System.out.println("No se pudo cancelar: " + ex.getMessage());
+            }
+
+            // --- 5️⃣ Intentar marcar un pedido como No Entregado
+            int idPedidoNoEntregado = 9; // Asegúrate que esté en estado "Listo"
+            System.out.println("\n--- Marcar pedido ID " + idPedidoNoEntregado + " como No Entregado ---");
+            try {
+                pedidoProgramadoBO.actualizarEstado(idPedidoNoEntregado, "No Entregado");
+                System.out.println("Pedido marcado como No Entregado correctamente.");
+            } catch (NegocioException ex) {
+                System.out.println("No se pudo marcar No Entregado: " + ex.getMessage());
+            }
+
+        } catch (Exception ex) {
+            System.err.println("Error en pruebas PedidoProgramadoBO: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+        System.out.println("\n=== Pruebas de HistorialEstadoBO ===");
+
         try {
-            pedidoProgramadoBO.actualizarEstado(idPedido, "Listo");
-            System.out.println("Estado actualizado a Listo correctamente.");
-        } catch (NegocioException ex) {
-            System.out.println("Error al actualizar a Listo: " + ex.getMessage());
-        }
 
-        // --- 3️⃣ Intentar actualizar estado a Entregado
-        System.out.println("\n--- Actualizar estado a Entregado ---");
-        try {
-            pedidoProgramadoBO.actualizarEstado(idPedido, "Entregado");
-            System.out.println("Estado actualizado a Entregado correctamente.");
-        } catch (NegocioException ex) {
-            System.out.println("Error al actualizar a Entregado: " + ex.getMessage());
-        }
+            IHistorialEstadoDAO historialDAO = new HistorialEstadoDAO(conexionBD);
+            HistorialEstadoBO historialBO = new HistorialEstadoBO(historialDAO);
 
-        // --- 4️⃣ Intentar actualizar estado a Cancelado
-        int idPedidoCancelar = 8; // Asegúrate que esté en estado "Pendiente"
-        System.out.println("\n--- Intentar cancelar pedido ID " + idPedidoCancelar + " ---");
-        try {
-            pedidoProgramadoBO.actualizarEstado(idPedidoCancelar, "Cancelado");
-            System.out.println("Pedido cancelado correctamente.");
-        } catch (NegocioException ex) {
-            System.out.println("No se pudo cancelar: " + ex.getMessage());
-        }
+            // -------------------------------
+            // 1️⃣ Obtener historial por estado
+            System.out.println("\n=== Historial de pedidos Entregados ===");
+            List<HistorialEstadoDTO> porEstado = historialBO.obtenerPedidosPorEstado("Entregado");
 
-        // --- 5️⃣ Intentar marcar un pedido como No Entregado
-        int idPedidoNoEntregado = 9; // Asegúrate que esté en estado "Listo"
-        System.out.println("\n--- Marcar pedido ID " + idPedidoNoEntregado + " como No Entregado ---");
-        try {
-            pedidoProgramadoBO.actualizarEstado(idPedidoNoEntregado, "No Entregado");
-            System.out.println("Pedido marcado como No Entregado correctamente.");
-        } catch (NegocioException ex) {
-            System.out.println("No se pudo marcar No Entregado: " + ex.getMessage());
-        }
+            for (HistorialEstadoDTO h : porEstado) {
+                System.out.println(formatHistorial(h));
+            }
 
-    } catch (Exception ex) {
-        System.err.println("Error en pruebas PedidoProgramadoBO: " + ex.getMessage());
-        ex.printStackTrace();
-    }
+            // -------------------------------
+            // 2️⃣ Buscar historial por teléfono
+            System.out.println("\n=== Historial del teléfono 5551234567 ===");
+            List<HistorialEstadoDTO> porTelefono = historialBO.buscarPorTelefono("5551234567");
+
+            for (HistorialEstadoDTO h : porTelefono) {
+                System.out.println(formatHistorial(h));
+            }
+
+            // -------------------------------
+            // 3️⃣ Buscar historial por rango de fechas
+            LocalDate inicioHist = LocalDate.now().minusDays(7);
+            LocalDate finHist = LocalDate.now();
+
+            System.out.println("\n=== Historial de los últimos 7 días ===");
+            List<HistorialEstadoDTO> porRango = historialBO.buscarPorRangoFechas(inicioHist, finHist);
+
+            for (HistorialEstadoDTO h : porRango) {
+                System.out.println(formatHistorial(h));
+            }
+
+            // -------------------------------
+            // 4️⃣ Buscar historial por folio
+            int folioBuscarHist = 1;
+
+            System.out.println("\n=== Historial por folio: " + folioBuscarHist + " ===");
+            List<HistorialEstadoDTO> porFolio = historialBO.buscarPorFolio(folioBuscarHist);
+
+            if (porFolio.isEmpty()) {
+                System.out.println("No se encontró historial para el folio " + folioBuscarHist);
+            } else {
+                for (HistorialEstadoDTO h : porFolio) {
+                    System.out.println(formatHistorial(h));
+                }
+            }
+
+        } catch (NegocioException ex) {
+            System.err.println("Error en pruebas HistorialEstadoBO: " + ex.getMessage());
+            ex.printStackTrace();
+        }
     }
 
     private static String formatPedido(PedidoEntregaDTO p) {
@@ -243,5 +303,17 @@ public class Panaderia_Proyecto_UC1_JDBC_252252_262733 {
                 + " | Total: $" + p.getTotal()
                 + " | Folio: " + p.getFolio()
                 + " | Fecha: " + p.getFechaCreacion();
+    }
+    
+    private static String formatHistorial(HistorialEstadoDTO h) {
+        return "ID Historial: " + h.getIdHistorial()
+                + " | ID Pedido: " + h.getIdPedido()
+                + " | Folio: " + h.getFolio()
+                + " | Cliente: " + h.getNombreCliente()
+                + " | Teléfono: " + h.getTelefonoCliente()
+                + " | Estado Anterior: " + h.getEstadoAnterior()
+                + " | Estado Nuevo: " + h.getEstadoNuevo()
+                + " | Fecha Cambio: " + h.getFechaCambio()
+                + " | Total: $" + h.getTotal();
     }
 }

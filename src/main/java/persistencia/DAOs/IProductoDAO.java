@@ -6,7 +6,6 @@ package persistencia.DAOs;
 
 import negocio.DTOs.ProductoDTO;
 import java.util.List;
-import persistencia.dominio.Producto;
 import persistencia.excepciones.PersistenciaException;
 
 /**
