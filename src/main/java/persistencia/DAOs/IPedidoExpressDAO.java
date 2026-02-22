@@ -4,6 +4,9 @@
  */
 package persistencia.DAOs;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import negocio.DTOs.PedidoExpressDTO;
 import persistencia.dominio.PedidoExpress;
 import persistencia.excepciones.PersistenciaException;
 
@@ -13,6 +16,13 @@ import persistencia.excepciones.PersistenciaException;
  */
 public interface IPedidoExpressDAO {
     void insertar(PedidoExpress pedido) throws PersistenciaException;
+    
     void actualizarEstado(int idPedido, String estado) throws PersistenciaException;
+    
     PedidoExpress buscarPorId(int idPedido) throws PersistenciaException;
+    
+    List<PedidoExpressDTO> obtenerPendientes() throws PersistenciaException;
+    
+    void actualizarFechaListo(int idPedido, LocalDateTime fecha) throws PersistenciaException;
+
 }

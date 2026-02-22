@@ -18,9 +18,7 @@ public interface IPedidoDAO {
 
     List<PedidoEntregaDTO> buscarPorTelefono(String telefono) throws PersistenciaException;
 
-    List<PedidoEntregaDTO> buscarPorFolio(int folio) throws PersistenciaException;
-
     List<PedidoEntregaDTO> buscarPorRangoFechas(LocalDate inicio, LocalDate fin) throws PersistenciaException;
-
-    void actualizarEstado(int idPedido, String nuevoEstado) throws PersistenciaException;
+    
+    List<PedidoEntregaDTO> buscarPorFolio(int folio) throws PersistenciaException;
 }

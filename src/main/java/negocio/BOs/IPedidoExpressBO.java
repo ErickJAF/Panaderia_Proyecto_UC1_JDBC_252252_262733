@@ -4,6 +4,8 @@
  */
 package negocio.BOs;
 
+import java.util.List;
+import negocio.DTOs.PedidoExpressDTO;
 import negocio.excepciones.NegocioException;
 import persistencia.dominio.PedidoExpress;
 
@@ -11,12 +13,13 @@ import persistencia.dominio.PedidoExpress;
  *
  * @author ERICK
  */
+
 public interface IPedidoExpressBO {
     void registrarPedido(PedidoExpress pedido) throws NegocioException;
 
     void validarTiempoEntrega(PedidoExpress pedido) throws NegocioException;
 
-    void entregarPedido(PedidoExpress pedido) throws NegocioException;
-
-    void cancelarPedido(int idPedido) throws NegocioException;
+    void actualizarEstado(int idPedido, String estado) throws NegocioException;
+    
+    PedidoExpress buscarPorId(int idPedido) throws NegocioException;
 }

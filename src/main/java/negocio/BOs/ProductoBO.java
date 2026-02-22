@@ -6,6 +6,7 @@ package negocio.BOs;
 
 import negocio.DTOs.ProductoDTO;
 import java.util.List;
+import negocio.excepciones.NegocioException;
 import persistencia.DAOs.IProductoDAO;
 import persistencia.excepciones.PersistenciaException;
 
@@ -21,9 +22,12 @@ public class ProductoBO implements IProductoBO{
         this.productoDAO = productoDAO;
     }
     
-    public List<ProductoDTO> obtenerDisponibles() throws PersistenciaException {
-       
-        return productoDAO.obtenerDisponibles();
+    @Override
+    public List<ProductoDTO> obtenerDisponibles() throws NegocioException {
+        try {
+            return productoDAO.obtenerDisponibles();
+        } catch (PersistenciaException ex) {
+            throw new NegocioException("No se pudieron obtener los productos disponibles", ex);
+        }
     }
-    
 }

@@ -12,7 +12,6 @@ import java.util.logging.Logger;
 import negocio.excepciones.NegocioException;
 import persistencia.DAOs.IPedidoExpressDAO;
 import persistencia.DAOs.PedidoExpressDAO;
-import persistencia.conexion.IConexionBD;
 import persistencia.dominio.PedidoExpress;
 import persistencia.excepciones.PersistenciaException;
 
@@ -25,8 +24,8 @@ public class PedidoExpressBO implements IPedidoExpressBO {
     private final IPedidoExpressDAO pedidoDAO;
     private static final Logger LOG = Logger.getLogger(PedidoExpressBO.class.getName());
 
-    public PedidoExpressBO(IConexionBD conexionBD) {
-        this.pedidoDAO = new PedidoExpressDAO(conexionBD);
+    public PedidoExpressBO(IPedidoExpressDAO pedidoDAO) {
+        this.pedidoDAO = pedidoDAO;
     }
 
     @Override
@@ -49,42 +48,93 @@ public class PedidoExpressBO implements IPedidoExpressBO {
     @Override
     public void validarTiempoEntrega(PedidoExpress pedido) throws NegocioException {
         LOG.info("Validando tiempo de entrega del pedido...");
+
         if (pedido.getFechaListo() == null) {
             throw new NegocioException("El pedido aún no tiene fecha de listo.");
         }
 
-        Duration tiempoTranscurrido = Duration.between(pedido.getFechaListo(), LocalDateTime.now());
-        if (tiempoTranscurrido.toMinutes() > 30) { // ejemplo: 30 min máximo para entrega
-            throw new NegocioException("El pedido ya ha superado el tiempo estimado de entrega.");
+        if (!pedido.getEstado().equals("Listo")) {
+            LOG.info("Pedido no está en estado Listo, no se aplica la validación de tiempo.");
+            return;
         }
+
+        Duration tiempoTranscurrido = Duration.between(pedido.getFechaListo(), LocalDateTime.now());
+        if (tiempoTranscurrido.toMinutes() > 20) {
+            LOG.warning("El pedido ha superado el tiempo estimado de entrega. Marcando como No Entregado...");
+            try {
+                pedidoDAO.actualizarEstado(pedido.getIdPedido(), "No Entregado");
+            } catch (PersistenciaException ex) {
+                LOG.log(Level.SEVERE, "Error al actualizar el estado a No Entregado", ex);
+                throw new NegocioException("No se pudo actualizar el estado a No Entregado", ex);
+            }
+            throw new NegocioException("El pedido ha superado el tiempo estimado de entrega y se marcó como No Entregado.");
+        }
+
         LOG.info("Tiempo de entrega dentro de lo permitido.");
     }
 
     @Override
-    public void entregarPedido(PedidoExpress pedido) throws NegocioException {
-        LOG.info("Marcando pedido como entregado...");
-        if (pedido.estaFinalizado()) {
-            throw new NegocioException("El pedido ya fue finalizado o cancelado.");
+    public void actualizarEstado(int idPedido, String nuevoEstado) throws NegocioException {
+        if (nuevoEstado == null || nuevoEstado.isBlank()) {
+            throw new NegocioException("El estado no puede ser vacío");
         }
-        pedido.setEstado("Entregado");
+
         try {
-            pedidoDAO.actualizarEstado(pedido.getIdPedido(), pedido.getEstado());
-            LOG.info("Pedido express entregado correctamente.");
+            PedidoExpress pedido = pedidoDAO.buscarPorId(idPedido);
+            if (pedido == null) {
+                throw new NegocioException("No se encontró el pedido con ID " + idPedido);
+            }
+
+            String estadoActual = pedido.getEstado();
+
+            switch (nuevoEstado) {
+                case "Listo":
+                    if (!estadoActual.equals("Pendiente")) {
+                        throw new NegocioException("Solo los pedidos Pendientes pueden marcarse como Listo");
+                    }
+                    break;
+
+                case "Entregado":
+                    if (!estadoActual.equals("Listo")) {
+                        throw new NegocioException("Solo los pedidos Listos pueden entregarse");
+                    }
+                    break;
+
+                case "Cancelado":
+                    if (estadoActual.equals("Entregado") || estadoActual.equals("No Entregado")) {
+                        throw new NegocioException("No se puede cancelar un pedido ya entregado o no entregado");
+                    }
+                    break;
+
+                case "No Entregado":
+                    if (!estadoActual.equals("Listo")) {
+                        throw new NegocioException("Solo los pedidos Listos pueden pasar a No Entregado");
+                    }
+                    break;
+
+                default:
+                    throw new NegocioException("Estado no válido: " + nuevoEstado);
+            }
+            if (nuevoEstado.equals("Listo")) {
+                pedidoDAO.actualizarFechaListo(idPedido, LocalDateTime.now());
+            }
+            pedidoDAO.actualizarEstado(idPedido, nuevoEstado);
+
         } catch (PersistenciaException ex) {
-            LOG.log(Level.SEVERE, "Error al entregar pedido", ex);
-            throw new NegocioException("No se pudo marcar el pedido como entregado.", ex);
+            throw new NegocioException("Error al actualizar el estado del pedido", ex);
         }
     }
 
     @Override
-    public void cancelarPedido(int idPedido) throws NegocioException {
-        LOG.info("Cancelando pedido express con ID: " + idPedido);
+    public PedidoExpress buscarPorId(int idPedido) throws NegocioException {
         try {
-            pedidoDAO.actualizarEstado(idPedido, "Cancelado");
-            LOG.info("Pedido express cancelado correctamente.");
+            PedidoExpress pedido = pedidoDAO.buscarPorId(idPedido);
+            if (pedido == null) {
+                throw new NegocioException("No se encontró el pedido con ID " + idPedido);
+            }
+            return pedido;
         } catch (PersistenciaException ex) {
-            LOG.log(Level.SEVERE, "Error al cancelar pedido", ex);
-            throw new NegocioException("No se pudo cancelar el pedido express.", ex);
+            throw new NegocioException("Error al buscar el pedido por ID", ex);
         }
     }
 }

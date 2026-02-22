@@ -17,7 +17,7 @@ public class PedidoProgramadoDTO {
     private double descuento;
     private double total;
     private Integer idCupon;
-    private List<DetallePedidoDTO> detalles; // 🔴 NUEVO
+    private List<DetallePedidoDTO> detalles;
 
     public PedidoProgramadoDTO(int idCliente,
                                int idEmpleado,
@@ -33,7 +33,7 @@ public class PedidoProgramadoDTO {
         this.descuento = descuento;
         this.total = total;
         this.idCupon = idCupon;
-        this.detalles = detalles; // 🔴 NUEVO
+        this.detalles = detalles;
     }
 
     public int getIdCliente() { return idCliente; }
@@ -43,7 +43,6 @@ public class PedidoProgramadoDTO {
     public double getTotal() { return total; }
     public Integer getIdCupon() { return idCupon; }
 
-    // 🔴 NUEVO
     public List<DetallePedidoDTO> getDetalles() {
         return detalles;
     }

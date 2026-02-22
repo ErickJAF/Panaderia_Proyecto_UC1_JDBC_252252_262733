@@ -69,7 +69,7 @@ CREATE TABLE EXPRESS (
     id_pedido INT PRIMARY KEY,
     folio INT NOT NULL UNIQUE,
     pin_seguridad VARCHAR(255) NOT NULL,
-    fecha_listo DATETIME NOT NULL,
+    fecha_listo DATETIME DEFAULT NULL,
     FOREIGN KEY (id_pedido) REFERENCES PEDIDO(id_pedido)
 );
 
@@ -140,15 +140,23 @@ VALUES
 INSERT INTO PEDIDO (fecha_creacion, estado, subtotal, descuento, total, id_empleado)
 VALUES
 (CURDATE(), 'Pendiente', 175.00, 10.00, 165.00, 1),
-(CURDATE(), 'Listo', 95.00, 0.00, 95.00, 2);
+(CURDATE(), 'Pendiente', 50.00, 0.00, 50.00, 1),
+(CURDATE(), 'Pendiente', 120.00, 10.00, 110.00, 2),
+(CURDATE(), 'Pendiente', 200.00, 15.00, 185.00, 1),
+(CURDATE(), 'Pendiente', 75.00, 5.00, 70.00, 2),
+(CURDATE(), 'Pendiente', 90.00, 0.00, 90.00, 1);
 
 INSERT INTO PROGRAMADO (id_pedido, id_cliente, id_cupon)
 VALUES
 (1, 1, 1);
 
-INSERT INTO EXPRESS (id_pedido, folio, pin_seguridad, fecha_listo)
+INSERT INTO EXPRESS (id_pedido, folio, pin_seguridad)
 VALUES
-(2, 1, '1234HASH', NOW());
+(2, 1, '1234HASH'),
+(3, 2, '1234HASH'),
+(4, 3, '1234HASH'),
+(5, 4, '1234HASH'),
+(6, 5, '1234HASH');
 
 INSERT INTO DETALLE_PEDIDO (cantidad, nota, precio_unitario, id_pedido, id_producto)
 VALUES
@@ -206,6 +214,10 @@ SELECT e.nombre_completo, SUM(p.total) AS total_generado
 FROM EMPLEADO e
 JOIN PEDIDO p ON e.id_empleado = p.id_empleado
 GROUP BY e.nombre_completo;
+
+-- 8 Pedidos pendientes
+SELECT * 
+FROM EXPRESS;
 
 DELIMITER //
 

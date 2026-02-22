@@ -10,8 +10,12 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import negocio.DTOs.PedidoExpressDTO;
 import persistencia.conexion.IConexionBD;
 import persistencia.dominio.PedidoExpress;
 import persistencia.excepciones.PersistenciaException;
@@ -120,7 +124,14 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
                     p.setTotal(rs.getDouble("total"));
                     p.setFolio(String.valueOf(rs.getInt("folio")));
                     p.setPinEncriptado(rs.getString("pin_seguridad"));
-                    p.setFechaListo(rs.getTimestamp("fecha_listo").toLocalDateTime());
+
+                    // ✅ Manejo seguro de fechaListo
+                    Timestamp ts = rs.getTimestamp("fecha_listo");
+                    if (ts != null) {
+                        p.setFechaListo(ts.toLocalDateTime());
+                    } else {
+                        p.setFechaListo(null);
+                    }
 
                     return p;
                 } else {
@@ -131,6 +142,67 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
         } catch (SQLException ex) {
             LOG.log(Level.SEVERE, "Error al buscar pedido express por ID", ex);
             throw new PersistenciaException("Error al buscar pedido express por ID", ex);
+        }
+    }
+
+    @Override
+    public List<PedidoExpressDTO> obtenerPendientes() throws PersistenciaException {
+        String sql = """
+            SELECT e.id_pedido, e.folio, e.pin_seguridad, c.nombre_completo, t.numero,
+                   p.subtotal, p.total, p.estado, p.fecha_creacion
+            FROM PEDIDO p
+            JOIN EXPRESS e ON p.id_pedido = e.id_pedido
+            LEFT JOIN PROGRAMADO pr ON e.id_pedido = pr.id_pedido
+            LEFT JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
+            LEFT JOIN TELEFONO t ON c.id_cliente = t.id_cliente
+            WHERE p.estado = 'Pendiente'
+        """;
+
+        List<PedidoExpressDTO> lista = new ArrayList<>();
+        try (Connection conn = conexionBD.crearConexion();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                PedidoExpressDTO dto = new PedidoExpressDTO();
+                dto.setIdPedido(rs.getInt("id_pedido"));
+                dto.setFolio(rs.getInt("folio"));
+                dto.setPinEncriptado(rs.getString("pin_seguridad"));
+                dto.setNombreCliente(rs.getString("nombre_completo"));
+                dto.setTelefonoCliente(rs.getString("numero"));
+                dto.setSubtotal(rs.getDouble("subtotal"));
+                dto.setTotal(rs.getDouble("total"));
+                dto.setEstado(rs.getString("estado"));
+                dto.setFechaCreacion(rs.getTimestamp("fecha_creacion").toLocalDateTime());
+                lista.add(dto);
+            }
+
+            return lista;
+
+        } catch (SQLException ex) {
+            throw new PersistenciaException("Error al obtener pedidos express pendientes", ex);
+        }
+    }
+
+    @Override
+    public void actualizarFechaListo(int idPedido, LocalDateTime fecha) throws PersistenciaException {
+        String sql = "UPDATE EXPRESS SET fecha_listo = ? WHERE id_pedido = ?";
+
+        try (Connection conn = conexionBD.crearConexion();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setTimestamp(1, Timestamp.valueOf(fecha));
+            ps.setInt(2, idPedido);
+
+            if (ps.executeUpdate() == 0) {
+                throw new PersistenciaException("No se encontró el pedido para actualizar fechaListo");
+            }
+
+            LOG.info("FechaListo del pedido express actualizada correctamente.");
+
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "Error al actualizar fechaListo", ex);
+            throw new PersistenciaException("Error al actualizar fechaListo", ex);
         }
     }
 }

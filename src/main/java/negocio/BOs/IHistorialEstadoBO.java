@@ -4,13 +4,14 @@
  */
 package negocio.BOs;
 
+import java.util.List;
 import negocio.excepciones.NegocioException;
-import persistencia.excepciones.PersistenciaException;
+import persistencia.dominio.HistorialEstado;
 
 /**
  *
  * @author ERICK
  */
-public interface IGestionEntregasBO {
-    public void cambiarEstadoPedido(int idPedido, String nuevoEstado) throws NegocioException;
+public interface IHistorialEstadoBO {
+    List<HistorialEstado> obtenerHistorialPorPedido(int idPedido) throws NegocioException;
 }

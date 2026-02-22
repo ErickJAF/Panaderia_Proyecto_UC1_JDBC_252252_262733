@@ -214,4 +214,28 @@ public class PedidoProgramadoDAO implements IPedidoProgramadoDAO {
 
         return p;
     }
+
+    @Override
+    public List<PedidoProgramado> obtenerPendientes() throws PersistenciaException {
+        String sql = """
+            SELECT p.*, pr.id_cliente, pr.id_cupon
+            FROM PEDIDO p
+            JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
+            WHERE p.estado = 'Pendiente'
+        """;
+
+        List<PedidoProgramado> lista = new ArrayList<>();
+        try (Connection conn = conexionBD.crearConexion();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                lista.add(extraerPedido(rs));
+            }
+            return lista;
+
+        } catch (SQLException ex) {
+            throw new PersistenciaException("Error al obtener pedidos pendientes", ex);
+        }
+    }
 }

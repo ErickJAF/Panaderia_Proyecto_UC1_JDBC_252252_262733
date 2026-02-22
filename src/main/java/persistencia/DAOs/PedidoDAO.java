@@ -107,41 +107,6 @@ public class PedidoDAO implements IPedidoDAO{
     }
 
     @Override
-    public List<PedidoEntregaDTO> buscarPorFolio(int folio) throws PersistenciaException {
-
-        String sql = """
-            SELECT p.id_pedido, p.fecha_creacion, p.estado, p.total,
-                   NULL AS nombre_completo,
-                   NULL AS telefono,
-                   e.folio
-            FROM PEDIDO p
-            JOIN EXPRESS e ON p.id_pedido = e.id_pedido
-            WHERE e.folio = ?
-            ORDER BY p.fecha_creacion ASC
-            """;
-
-        List<PedidoEntregaDTO> lista = new ArrayList<>();
-
-        try (Connection conn = conexionBD.crearConexion();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, folio);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    lista.add(extraerDTO(rs));
-                }
-            }
-
-            return lista;
-
-        } catch (SQLException ex) {
-            LOG.log(Level.SEVERE, "Error al buscar por folio", ex);
-            throw new PersistenciaException("Error al buscar por folio", ex);
-        }
-    }
-
-    @Override
     public List<PedidoEntregaDTO> buscarPorRangoFechas(LocalDate inicio, LocalDate fin) throws PersistenciaException {
 
         String sql = """
@@ -180,31 +145,6 @@ public class PedidoDAO implements IPedidoDAO{
         }
     }
 
-    @Override
-    public void actualizarEstado(int idPedido, String nuevoEstado) throws PersistenciaException {
-
-        String sql = """
-            UPDATE PEDIDO
-            SET estado = ?
-            WHERE id_pedido = ?
-            """;
-
-        try (Connection conn = conexionBD.crearConexion();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, nuevoEstado);
-            ps.setInt(2, idPedido);
-
-            if (ps.executeUpdate() == 0) {
-                throw new PersistenciaException("No se encontró el pedido.");
-            }
-
-        } catch (SQLException ex) {
-            LOG.log(Level.SEVERE, "Error al actualizar estado del pedido", ex);
-            throw new PersistenciaException("Error al actualizar estado del pedido", ex);
-        }
-    }
-
     private PedidoEntregaDTO extraerDTO(ResultSet rs) throws SQLException {
 
         PedidoEntregaDTO dto = new PedidoEntregaDTO();
@@ -221,5 +161,40 @@ public class PedidoDAO implements IPedidoDAO{
 
         return dto;
     }
-    
+
+    @Override
+    public List<PedidoEntregaDTO> buscarPorFolio(int folio) throws PersistenciaException {
+        String sql = """
+            SELECT p.id_pedido, p.fecha_creacion, p.estado, p.total,
+                   c.nombre_completo,
+                   t.numero AS telefono,
+                   e.folio
+            FROM PEDIDO p
+            LEFT JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
+            LEFT JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
+            LEFT JOIN TELEFONO t ON c.id_cliente = t.id_cliente
+            LEFT JOIN EXPRESS e ON p.id_pedido = e.id_pedido
+            WHERE e.folio = ?
+            """;
+
+        List<PedidoEntregaDTO> lista = new ArrayList<>();
+
+        try (Connection conn = conexionBD.crearConexion();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, folio);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(extraerDTO(rs));
+                }
+            }
+
+            return lista;
+
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "Error al buscar por folio", ex);
+            throw new PersistenciaException("Error al buscar por folio", ex);
+        }
+    }
 }
