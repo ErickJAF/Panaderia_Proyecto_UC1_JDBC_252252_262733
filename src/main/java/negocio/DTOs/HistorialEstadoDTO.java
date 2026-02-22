@@ -9,7 +9,7 @@ public class HistorialEstadoDTO {
 
     private int idHistorial;
     private int idPedido;
-    private int folio;
+    private Integer folio;
     private String estadoAnterior;
     private String estadoNuevo;
     private LocalDateTime fechaCambio;
@@ -35,11 +35,11 @@ public class HistorialEstadoDTO {
         this.idPedido = idPedido;
     }
 
-    public int getFolio() {
+    public Integer getFolio() {
         return folio;
     }
 
-    public void setFolio(int folio) {
+    public void setFolio(Integer folio) {
         this.folio = folio;
     }
 

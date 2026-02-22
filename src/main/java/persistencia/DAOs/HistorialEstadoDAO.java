@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package persistencia.DAOs;
 
 import java.sql.Connection;
@@ -18,31 +14,24 @@ import persistencia.conexion.IConexionBD;
 import persistencia.dominio.HistorialEstado;
 import persistencia.excepciones.PersistenciaException;
 
-/**
- *
- * @author ERICK
- */
 public class HistorialEstadoDAO implements IHistorialEstadoDAO {
 
     private final IConexionBD conexionBD;
-    private static final Logger LOG =
-            Logger.getLogger(HistorialEstadoDAO.class.getName());
+    private static final Logger LOG = Logger.getLogger(HistorialEstadoDAO.class.getName());
 
     public HistorialEstadoDAO(IConexionBD conexionBD) {
         this.conexionBD = conexionBD;
     }
 
     @Override
-    public List<HistorialEstado> obtenerHistorialPorPedido(int idPedido)
-            throws PersistenciaException {
+    public List<HistorialEstado> obtenerHistorialPorPedido(int idPedido) throws PersistenciaException {
 
         String sql = """
-            SELECT id_historial, id_pedido, estado_anterior,
-                   estado_nuevo, fecha_cambio
+            SELECT id_historial, id_pedido, estado_anterior, estado_nuevo, fecha_cambio
             FROM HISTORIAL_ESTADO
             WHERE id_pedido = ?
             ORDER BY fecha_cambio ASC
-            """;
+        """;
 
         List<HistorialEstado> lista = new ArrayList<>();
 
@@ -60,15 +49,12 @@ public class HistorialEstadoDAO implements IHistorialEstadoDAO {
             return lista;
 
         } catch (SQLException ex) {
-            LOG.log(Level.SEVERE,
-                    "Error al obtener historial del pedido", ex);
-            throw new PersistenciaException(
-                    "Error al obtener historial del pedido", ex);
+            LOG.log(Level.SEVERE, "Error al obtener historial del pedido", ex);
+            throw new PersistenciaException("Error al obtener historial del pedido", ex);
         }
     }
 
-    private HistorialEstado extraerHistorial(ResultSet rs)
-            throws SQLException {
+    private HistorialEstado extraerHistorial(ResultSet rs) throws SQLException {
 
         HistorialEstado h = new HistorialEstado();
 
@@ -76,79 +62,73 @@ public class HistorialEstadoDAO implements IHistorialEstadoDAO {
         h.setIdPedido(rs.getInt("id_pedido"));
         h.setEstadoAnterior(rs.getString("estado_anterior"));
         h.setEstadoNuevo(rs.getString("estado_nuevo"));
-        h.setFechaCambio(
-                rs.getTimestamp("fecha_cambio").toLocalDateTime()
-        );
+        h.setFechaCambio(rs.getTimestamp("fecha_cambio").toLocalDateTime());
 
         return h;
     }
 
-
     @Override
-    public List<HistorialEstadoDTO> obtenerPedidosPorEstado(String estado)
-            throws PersistenciaException {
+    public List<HistorialEstadoDTO> obtenerPedidosPorEstado(String estado) throws PersistenciaException {
 
         String sql = """
-            SELECT h.id_historial, h.id_pedido, h.estado_anterior,
-                   h.estado_nuevo, h.fecha_cambio,
-                   p.folio,
-                   c.nombre_completo,
+            SELECT h.id_historial, h.id_pedido, h.estado_anterior, h.estado_nuevo,
+                   h.fecha_cambio, c.nombre_completo,
                    t.numero AS telefono,
-                   p.total
+                   p.total,
+                   e.folio
             FROM HISTORIAL_ESTADO h
             JOIN PEDIDO p ON h.id_pedido = p.id_pedido
             LEFT JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
             LEFT JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
             LEFT JOIN TELEFONO t ON c.id_cliente = t.id_cliente
+            LEFT JOIN EXPRESS e ON p.id_pedido = e.id_pedido
             WHERE h.estado_nuevo = ?
             ORDER BY h.fecha_cambio ASC
-            """;
+        """;
 
-        return ejecutarConsultaConParametroString(sql, estado);
+        return ejecutarConsultaConParametro(sql, estado);
     }
 
     @Override
-    public List<HistorialEstadoDTO> buscarPorTelefono(String telefono)
-            throws PersistenciaException {
+    public List<HistorialEstadoDTO> buscarPorTelefono(String telefono) throws PersistenciaException {
 
         String sql = """
-            SELECT h.id_historial, h.id_pedido, h.estado_anterior,
-                   h.estado_nuevo, h.fecha_cambio,
-                   p.folio,
-                   c.nombre_completo,
+            SELECT h.id_historial, h.id_pedido, h.estado_anterior, h.estado_nuevo,
+                   h.fecha_cambio, c.nombre_completo,
                    t.numero AS telefono,
-                   p.total
+                   p.total,
+                   e.folio
             FROM HISTORIAL_ESTADO h
             JOIN PEDIDO p ON h.id_pedido = p.id_pedido
-            LEFT JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
-            LEFT JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
-            LEFT JOIN TELEFONO t ON c.id_cliente = t.id_cliente
+            JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
+            JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
+            JOIN TELEFONO t ON c.id_cliente = t.id_cliente
+            LEFT JOIN EXPRESS e ON p.id_pedido = e.id_pedido
             WHERE t.numero = ?
             ORDER BY h.fecha_cambio ASC
-            """;
+        """;
 
-        return ejecutarConsultaConParametroString(sql, telefono);
+        return ejecutarConsultaConParametro(sql, telefono);
     }
 
     @Override
-    public List<HistorialEstadoDTO> buscarPorRangoFechas(LocalDate inicio, LocalDate fin)
-            throws PersistenciaException {
+    public List<HistorialEstadoDTO> buscarPorRangoFechas(LocalDate inicio, LocalDate fin) throws PersistenciaException {
 
         String sql = """
-            SELECT h.id_historial, h.id_pedido, h.estado_anterior,
-                   h.estado_nuevo, h.fecha_cambio,
-                   p.folio,
-                   c.nombre_completo,
+            SELECT h.id_historial, h.id_pedido, h.estado_anterior, h.estado_nuevo,
+                   h.fecha_cambio, c.nombre_completo,
                    t.numero AS telefono,
-                   p.total
+                   p.total,
+                   e.folio
             FROM HISTORIAL_ESTADO h
             JOIN PEDIDO p ON h.id_pedido = p.id_pedido
             LEFT JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
             LEFT JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
             LEFT JOIN TELEFONO t ON c.id_cliente = t.id_cliente
+            LEFT JOIN EXPRESS e ON p.id_pedido = e.id_pedido
             WHERE DATE(h.fecha_cambio) BETWEEN ? AND ?
             ORDER BY h.fecha_cambio ASC
-            """;
+        """;
 
         List<HistorialEstadoDTO> lista = new ArrayList<>();
 
@@ -167,39 +147,43 @@ public class HistorialEstadoDAO implements IHistorialEstadoDAO {
             return lista;
 
         } catch (SQLException ex) {
-            LOG.log(Level.SEVERE,
-                    "Error al buscar historial por rango de fechas", ex);
-            throw new PersistenciaException(
-                    "Error al buscar historial por rango de fechas", ex);
+            LOG.log(Level.SEVERE, "Error al buscar historial por rango de fechas", ex);
+            throw new PersistenciaException("Error al buscar historial por rango de fechas", ex);
         }
     }
 
     @Override
-    public List<HistorialEstadoDTO> buscarPorFolio(int folio)
-            throws PersistenciaException {
+    public List<HistorialEstadoDTO> buscarPorFolio(int folio) throws PersistenciaException {
 
         String sql = """
-            SELECT h.id_historial, h.id_pedido, h.estado_anterior,
-                   h.estado_nuevo, h.fecha_cambio,
-                   p.folio,
-                   c.nombre_completo,
-                   t.numero AS telefono,
-                   p.total
+            SELECT h.id_historial, h.id_pedido, h.estado_anterior, h.estado_nuevo,
+                   h.fecha_cambio, p.total,
+                   NULL AS nombre_completo,
+                   NULL AS telefono,
+                   e.folio
             FROM HISTORIAL_ESTADO h
             JOIN PEDIDO p ON h.id_pedido = p.id_pedido
-            LEFT JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
-            LEFT JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
-            LEFT JOIN TELEFONO t ON c.id_cliente = t.id_cliente
-            WHERE p.folio = ?
+            JOIN EXPRESS e ON p.id_pedido = e.id_pedido
+            WHERE e.folio = ?
             ORDER BY h.fecha_cambio ASC
-            """;
+        """;
+
+        return ejecutarConsultaConParametro(sql, folio);
+    }
+
+    private List<HistorialEstadoDTO> ejecutarConsultaConParametro(String sql, Object parametro)
+            throws PersistenciaException {
 
         List<HistorialEstadoDTO> lista = new ArrayList<>();
 
         try (Connection conn = conexionBD.crearConexion();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
-            ps.setInt(1, folio);
+            if (parametro instanceof String) {
+                ps.setString(1, (String) parametro);
+            } else if (parametro instanceof Integer) {
+                ps.setInt(1, (Integer) parametro);
+            }
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -210,41 +194,12 @@ public class HistorialEstadoDAO implements IHistorialEstadoDAO {
             return lista;
 
         } catch (SQLException ex) {
-            LOG.log(Level.SEVERE,
-                    "Error al buscar historial por folio", ex);
-            throw new PersistenciaException(
-                    "Error al buscar historial por folio", ex);
+            LOG.log(Level.SEVERE, "Error en consulta de historial", ex);
+            throw new PersistenciaException("Error en consulta de historial", ex);
         }
     }
 
-
-    private List<HistorialEstadoDTO> ejecutarConsultaConParametroString(
-            String sql, String parametro) throws PersistenciaException {
-
-        List<HistorialEstadoDTO> lista = new ArrayList<>();
-
-        try (Connection conn = conexionBD.crearConexion();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, parametro);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    lista.add(extraerHistorialDTO(rs));
-                }
-            }
-
-            return lista;
-
-        } catch (SQLException ex) {
-            LOG.log(Level.SEVERE, "Error en consulta con parámetro String", ex);
-            throw new PersistenciaException(
-                    "Error en consulta con parámetro String", ex);
-        }
-    }
-
-    private HistorialEstadoDTO extraerHistorialDTO(ResultSet rs)
-            throws SQLException {
+    private HistorialEstadoDTO extraerHistorialDTO(ResultSet rs) throws SQLException {
 
         HistorialEstadoDTO dto = new HistorialEstadoDTO();
 
@@ -252,14 +207,14 @@ public class HistorialEstadoDAO implements IHistorialEstadoDAO {
         dto.setIdPedido(rs.getInt("id_pedido"));
         dto.setEstadoAnterior(rs.getString("estado_anterior"));
         dto.setEstadoNuevo(rs.getString("estado_nuevo"));
-        dto.setFechaCambio(
-                rs.getTimestamp("fecha_cambio").toLocalDateTime()
-        );
+        dto.setFechaCambio(rs.getTimestamp("fecha_cambio").toLocalDateTime());
 
-        dto.setFolio(rs.getInt("folio")); // 🔥 AQUÍ ESTÁ LA CLAVE
         dto.setNombreCliente(rs.getString("nombre_completo"));
         dto.setTelefonoCliente(rs.getString("telefono"));
         dto.setTotal(rs.getDouble("total"));
+
+        int folio = rs.getInt("folio");
+        dto.setFolio(rs.wasNull() ? null : folio);
 
         return dto;
     }
