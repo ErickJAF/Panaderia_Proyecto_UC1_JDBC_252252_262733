@@ -1,7 +1,23 @@
 package com.mycompany.panaderia_proyecto_uc1_jdbc_252252_262733;
 
-//import persistencia.conexion.IConexionBD;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import persistencia.conexion.IConexionBD;
 
+import negocio.BOs.IPedidoProgramadoBO;
+import negocio.BOs.IProductoBO;
+import negocio.BOs.PedidoProgramadoBO;
+import negocio.BOs.ProductoBO;
+import negocio.excepciones.NegocioException;
+import persistencia.DAOs.DetallePedidoDAO;
+import persistencia.DAOs.IDetallePedidoDAO;
+import persistencia.DAOs.IPedidoProgramadoDAO;
+import persistencia.DAOs.IProductoDAO;
+import persistencia.DAOs.PedidoProgramadoDAO;
+import persistencia.DAOs.ProductoDAO;
+import persistencia.conexion.ConexionBD;
+import persistencia.conexion.IConexionBD;
+import presentacion.FrmCrearPedidoProgramado;
 import presentacion.FrmGestionDeEntregas;
 
 //import persistencia.conexion.ConexionBD;
@@ -31,14 +47,57 @@ import presentacion.FrmGestionDeEntregas;
 //import persistencia.DAOs.PedidoProgramadoDAO;
 
 public class Panaderia_Proyecto_UC1_JDBC_252252_262733 {
+public static void main(String[] args) {
 
+    java.awt.EventQueue.invokeLater(() -> {
+
+        try {
+
+            IConexionBD conexion = new ConexionBD();
+
+            IProductoDAO productoDAO =
+                    new ProductoDAO(conexion);
+            IProductoBO productoBO =
+                    new ProductoBO(productoDAO);
+
+            IPedidoProgramadoDAO pedidoDAO =
+                    new PedidoProgramadoDAO(conexion);
+
+            IDetallePedidoDAO detalleDAO =
+                    new DetallePedidoDAO(conexion);
+
+            IPedidoProgramadoBO pedidoBO =
+                    new PedidoProgramadoBO(pedidoDAO, detalleDAO);
+
+            int idEmpleado = 1;
+            int idCliente = 1;
+
+            FrmCrearPedidoProgramado frm =
+                    new FrmCrearPedidoProgramado(
+                            conexion,
+                            productoBO,
+                            pedidoBO,
+                            idEmpleado,
+                            idCliente
+                    );
+
+            frm.setVisible(true);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    });
+}
+}
+/*
     public static void main(String[] args) {
         
         java.awt.EventQueue.invokeLater(() -> {
             FrmGestionDeEntregas frame = new FrmGestionDeEntregas();
             frame.setVisible(true);
         });
-
+*/
 //        IConexionBD conexionBD = new ConexionBD();
 //        IPedidoDAO pedidoDAO = new PedidoDAO(conexionBD);
 //        IPedidoBO pedidoBO = new PedidoBO(pedidoDAO);
@@ -345,7 +404,7 @@ public class Panaderia_Proyecto_UC1_JDBC_252252_262733 {
 //            System.err.println("Error en pruebas HistorialEstadoBO: " + ex.getMessage());
 //            ex.printStackTrace();
 //        }
-    }
+   // }
 //
 //    private static String formatPedido(PedidoEntregaDTO p) {
 //        return "ID: " + p.getIdPedido()
@@ -368,4 +427,4 @@ public class Panaderia_Proyecto_UC1_JDBC_252252_262733 {
 //                + " | Fecha Cambio: " + h.getFechaCambio()
 //                + " | Total: $" + h.getTotal();
 //    }
-}
+//}

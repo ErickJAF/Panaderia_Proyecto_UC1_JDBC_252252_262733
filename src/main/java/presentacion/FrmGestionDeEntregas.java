@@ -50,13 +50,24 @@ public class FrmGestionDeEntregas extends JFrame {
         getContentPane().setBackground(BG_COLOR);
     }
 
-    private void inicializarBOs() {
-        IConexionBD conexionBD = new ConexionBD();
-        pedidoBO = new PedidoBO(new PedidoDAO(conexionBD));
-        pedidoExpressBO = new PedidoExpressBO(new PedidoExpressDAO(conexionBD));
-        pedidoProgramadoBO = new PedidoProgramadoBO(new PedidoProgramadoDAO(conexionBD));
-        new HistorialEstadoBO(new HistorialEstadoDAO(conexionBD));
-    }
+   private void inicializarBOs() {
+
+    IConexionBD conexionBD = new ConexionBD();
+
+    pedidoBO = new PedidoBO(new PedidoDAO(conexionBD));
+    pedidoExpressBO = new PedidoExpressBO(new PedidoExpressDAO(conexionBD));
+
+    IPedidoProgramadoDAO pedidoProgramadoDAO =
+            new PedidoProgramadoDAO(conexionBD);
+
+    IDetallePedidoDAO detallePedidoDAO =
+            new DetallePedidoDAO(conexionBD);
+
+    pedidoProgramadoBO =
+            new PedidoProgramadoBO(pedidoProgramadoDAO, detallePedidoDAO);
+
+    new HistorialEstadoBO(new HistorialEstadoDAO(conexionBD));
+}
 
     private void inicializarComponentes() {
         setLayout(new BorderLayout(10, 10));

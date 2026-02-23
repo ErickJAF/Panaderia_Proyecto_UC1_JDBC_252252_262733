@@ -10,6 +10,7 @@ import persistencia.dominio.PedidoProgramado;
 import java.time.LocalDate;
 import java.util.logging.Logger;
 import negocio.excepciones.NegocioException;
+import persistencia.DAOs.IDetallePedidoDAO;
 import persistencia.excepciones.PersistenciaException;
 
 /**
@@ -18,43 +19,72 @@ import persistencia.excepciones.PersistenciaException;
  */
 public class PedidoProgramadoBO implements IPedidoProgramadoBO{
     
+    private final IDetallePedidoDAO detalleDAO;
     private final IPedidoProgramadoDAO pedidoDAO;
 
     private static final Logger LOG = Logger.getLogger(PedidoProgramadoBO.class.getName());
 
-    public PedidoProgramadoBO(IPedidoProgramadoDAO pedidoDAO) {
-        this.pedidoDAO = pedidoDAO;
+    public PedidoProgramadoBO(
+        IPedidoProgramadoDAO pedidoDAO,
+        IDetallePedidoDAO detalleDAO) {
+
+    this.pedidoDAO = pedidoDAO;
+    this.detalleDAO = detalleDAO;
+}
+
+@Override
+public void registrarPedido(PedidoProgramadoDTO dto)
+        throws NegocioException {
+
+    if (dto.getDetalles() == null || dto.getDetalles().isEmpty()) {
+        throw new NegocioException("El pedido debe contener al menos un producto.");
     }
 
-    @Override
-    public void registrarPedido(PedidoProgramadoDTO dto)
-            throws NegocioException {
+    double subtotalCalculado = 0;
 
-        PedidoProgramado pedido = new PedidoProgramado();
+    for (var d : dto.getDetalles()) {
 
-        pedido.setFechaCreacion(LocalDate.now());
-        pedido.setEstado("Pendiente");
-        pedido.setSubtotal(dto.getSubtotal());
-        pedido.setDescuento((float) dto.getDescuento());
-        pedido.setTotal(dto.getTotal());
-        pedido.setIdEmpleado(dto.getIdEmpleado());
-        pedido.setIdCliente(dto.getIdCliente());
-        pedido.setIdCupon(dto.getIdCupon());
-
-        try {
-            pedidoDAO.insertar(pedido);
-
-            int idPedido = pedido.getIdPedido();
-
-//            for (DetallePedidoDTO d : dto.getDetalles()) {
-//                detalleDAO.insertar(idPedido, d);
-//            }
-
-        } catch (PersistenciaException e) {
-            LOG.severe("Error al crear pedido programado");
-            throw new NegocioException("No se pudo crear el pedido.", e);
+        if (d.getCantidad() <= 0) {
+            throw new NegocioException("Cantidad inválida en un producto.");
         }
+
+        subtotalCalculado += d.getCantidad() * d.getPrecioUnitario();
     }
+
+    if (Math.abs(subtotalCalculado - dto.getSubtotal()) > 0.01) {
+        throw new NegocioException("El subtotal no coincide con el cálculo interno.");
+    }
+
+    double totalCalculado = subtotalCalculado - dto.getDescuento();
+
+    if (Math.abs(totalCalculado - dto.getTotal()) > 0.01) {
+        throw new NegocioException("El total no coincide con el cálculo interno.");
+    }
+
+    PedidoProgramado pedido = new PedidoProgramado();
+    pedido.setFechaCreacion(LocalDate.now());
+    pedido.setEstado("Pendiente");
+    pedido.setSubtotal(dto.getSubtotal());
+    pedido.setDescuento((float) dto.getDescuento());
+    pedido.setTotal(dto.getTotal());
+    pedido.setIdEmpleado(dto.getIdEmpleado());
+    pedido.setIdCliente(dto.getIdCliente());
+    pedido.setIdCupon(dto.getIdCupon());
+
+    try {
+
+        pedidoDAO.insertar(pedido);
+
+        int idPedido = pedido.getIdPedido();
+
+        for (var d : dto.getDetalles()) {
+            detalleDAO.insertar(idPedido, d);
+        }
+
+    } catch (PersistenciaException e) {
+        throw new NegocioException("No se pudo crear el pedido.", e);
+    }
+}
 
     @Override
     public void actualizarEstado(int idPedido, String nuevoEstado) throws NegocioException {
