@@ -14,6 +14,8 @@ import persistencia.excepciones.PersistenciaException;
  * @author ERICK
  */
 public interface IPedidoDAO {
+    List<PedidoEntregaDTO> buscarPedidosPorCliente(String nombreCliente) throws PersistenciaException;
+    
     List<PedidoEntregaDTO> obtenerPedidosPorEstado(String estado) throws PersistenciaException;
 
     List<PedidoEntregaDTO> buscarPorTelefono(String telefono) throws PersistenciaException;

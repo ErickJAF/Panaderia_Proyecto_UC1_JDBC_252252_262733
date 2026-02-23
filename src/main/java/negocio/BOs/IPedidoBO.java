@@ -14,6 +14,8 @@ import negocio.excepciones.NegocioException;
  * @author ERICK
  */
 public interface IPedidoBO {
+    List<PedidoEntregaDTO> buscarPorCliente(String nombreCliente) throws NegocioException;
+            
     List<PedidoEntregaDTO> obtenerPorEstado(String Estado) throws NegocioException;
     
     List<PedidoEntregaDTO> buscarPorTelefono(String telefono) throws NegocioException;

@@ -25,6 +25,20 @@ public class PedidoBO implements IPedidoBO{
     public PedidoBO(IPedidoDAO pedidoDAO) {
         this.pedidoDAO = pedidoDAO;
     }
+    
+    @Override
+    public List<PedidoEntregaDTO> buscarPorCliente(String nombreCliente) throws NegocioException {
+        if (nombreCliente == null || nombreCliente.isEmpty()) {
+            throw new NegocioException("Debe proporcionar un nombre de cliente para la búsqueda.");
+        }
+
+        try {
+            return pedidoDAO.buscarPedidosPorCliente(nombreCliente);
+        } catch (PersistenciaException ex) {
+            LOG.log(Level.SEVERE, "Error al buscar pedidos por cliente", ex);
+            throw new NegocioException("No se pudieron buscar los pedidos por cliente.", ex);
+        }
+    }
 
     @Override
     public List<PedidoEntregaDTO> obtenerPorEstado(String estado) throws NegocioException {

@@ -29,6 +29,47 @@ public class PedidoDAO implements IPedidoDAO{
     public PedidoDAO(IConexionBD conexionBD) {
         this.conexionBD = conexionBD;
     }
+    
+    @Override
+    public List<PedidoEntregaDTO> buscarPedidosPorCliente(String nombreCliente) throws PersistenciaException {
+
+        String sql = """
+            SELECT p.id_pedido, p.fecha_creacion, p.estado, p.total,
+                   c.nombre_completo,
+                   (SELECT numero 
+                    FROM TELEFONO t 
+                    WHERE t.id_cliente = c.id_cliente 
+                    LIMIT 1) AS telefono,
+                   e.folio
+            FROM PEDIDO p
+            LEFT JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
+            LEFT JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
+            LEFT JOIN EXPRESS e ON p.id_pedido = e.id_pedido
+            WHERE c.nombre_completo LIKE ?
+            ORDER BY p.fecha_creacion ASC;
+            """;
+
+        List<PedidoEntregaDTO> lista = new ArrayList<>();
+
+        try (Connection conn = conexionBD.crearConexion();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            // Se usa '%' para búsqueda parcial
+            ps.setString(1, "%" + nombreCliente + "%");
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(extraerDTO(rs));
+                }
+            }
+
+            return lista;
+
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "Error al buscar pedidos por cliente", ex);
+            throw new PersistenciaException("Error al buscar pedidos por cliente", ex);
+        }
+    }
 
     @Override
     public List<PedidoEntregaDTO> obtenerPedidosPorEstado(String estado) throws PersistenciaException {
@@ -36,15 +77,17 @@ public class PedidoDAO implements IPedidoDAO{
         String sql = """
             SELECT p.id_pedido, p.fecha_creacion, p.estado, p.total,
                    c.nombre_completo,
-                   t.numero AS telefono,
+                   (SELECT numero 
+                    FROM TELEFONO t 
+                    WHERE t.id_cliente = c.id_cliente 
+                    LIMIT 1) AS telefono,
                    e.folio
             FROM PEDIDO p
             LEFT JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
             LEFT JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
-            LEFT JOIN TELEFONO t ON c.id_cliente = t.id_cliente
             LEFT JOIN EXPRESS e ON p.id_pedido = e.id_pedido
             WHERE p.estado = ?
-            ORDER BY p.fecha_creacion ASC
+            ORDER BY p.fecha_creacion ASC;
             """;
 
         List<PedidoEntregaDTO> lista = new ArrayList<>();
@@ -112,15 +155,17 @@ public class PedidoDAO implements IPedidoDAO{
         String sql = """
             SELECT p.id_pedido, p.fecha_creacion, p.estado, p.total,
                    c.nombre_completo,
-                   t.numero AS telefono,
+                   (SELECT numero 
+                    FROM TELEFONO t 
+                    WHERE t.id_cliente = c.id_cliente 
+                    LIMIT 1) AS telefono,
                    e.folio
             FROM PEDIDO p
             LEFT JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
             LEFT JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
-            LEFT JOIN TELEFONO t ON c.id_cliente = t.id_cliente
             LEFT JOIN EXPRESS e ON p.id_pedido = e.id_pedido
             WHERE DATE(p.fecha_creacion) BETWEEN ? AND ?
-            ORDER BY p.fecha_creacion ASC
+            ORDER BY p.fecha_creacion ASC;
             """;
 
         List<PedidoEntregaDTO> lista = new ArrayList<>();
