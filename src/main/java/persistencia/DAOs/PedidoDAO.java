@@ -242,4 +242,23 @@ public class PedidoDAO implements IPedidoDAO{
             throw new PersistenciaException("Error al buscar por folio", ex);
         }
     }
+
+    @Override
+    public void generarPago(double monto, String metodoPago, int idPedido) throws PersistenciaException {
+        String sql = "INSERT INTO Pago (id_pedido, monto, metodo_pago, fecha_pago) VALUES (?, ?, ?, ?)";
+
+        try (Connection conn = conexionBD.crearConexion();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idPedido);
+            ps.setDouble(2, monto);
+            ps.setString(3, metodoPago);
+            ps.setObject(4, LocalDate.now());
+
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            throw new PersistenciaException("Error al generar el pago", e);
+        }
+    }
 }

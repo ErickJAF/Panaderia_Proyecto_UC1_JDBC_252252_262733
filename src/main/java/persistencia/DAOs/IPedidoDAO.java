@@ -23,4 +23,6 @@ public interface IPedidoDAO {
     List<PedidoEntregaDTO> buscarPorRangoFechas(LocalDate inicio, LocalDate fin) throws PersistenciaException;
     
     List<PedidoEntregaDTO> buscarPorFolio(int folio) throws PersistenciaException;
+    
+    void generarPago(double monto, String metodoPago, int id) throws PersistenciaException;
 }

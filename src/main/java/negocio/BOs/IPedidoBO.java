@@ -23,4 +23,6 @@ public interface IPedidoBO {
     List<PedidoEntregaDTO> buscarPorRangoFechas(LocalDate inicio, LocalDate fin) throws NegocioException;
     
     List<PedidoEntregaDTO> buscarPorFolio(int folio) throws NegocioException;
+    
+    public void generarPago(double monto, String metodoPago, int idPedido) throws NegocioException;
 }

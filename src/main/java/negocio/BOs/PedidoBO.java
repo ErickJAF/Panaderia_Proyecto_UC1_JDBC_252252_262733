@@ -94,4 +94,13 @@ public class PedidoBO implements IPedidoBO{
             throw new NegocioException("Error al buscar por folio", ex);
         }
     }
+
+    @Override
+    public void generarPago(double monto, String metodoPago, int idPedido) throws NegocioException {
+        try {
+            pedidoDAO.generarPago(monto, metodoPago, idPedido);
+        } catch (PersistenciaException e) {
+            throw new NegocioException("No se pudo generar el pago para el pedido " + idPedido, e);
+        }
+    }
 }
