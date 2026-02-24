@@ -25,4 +25,6 @@ public interface IPedidoExpressDAO {
     List<PedidoExpressDTO> obtenerPendientes() throws PersistenciaException;
     
     void actualizarFechaListo(int idPedido, LocalDateTime fecha) throws PersistenciaException;
+    
+    boolean validarPin(int idPedido, String pinIngresado) throws PersistenciaException;
 }

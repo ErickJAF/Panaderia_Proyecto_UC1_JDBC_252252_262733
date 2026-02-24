@@ -161,4 +161,19 @@ public class PedidoExpressBO implements IPedidoExpressBO {
             throw new NegocioException("Error al buscar el pedido express.", ex);
         }
     }
+    
+    @Override
+    public void validarPin(int idPedido, String pinIngresado) throws NegocioException {
+
+        try {
+            boolean esValido = pedidoDAO.validarPin(idPedido, pinIngresado);
+
+            if (!esValido) {
+                throw new NegocioException("El PIN es incorrecto.");
+            }
+
+        } catch (PersistenciaException e) {
+            throw new NegocioException("Error al validar PIN.", e);
+        }
+    }
 }

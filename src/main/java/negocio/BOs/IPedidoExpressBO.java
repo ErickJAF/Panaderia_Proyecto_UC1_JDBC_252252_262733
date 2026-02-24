@@ -22,4 +22,6 @@ public interface IPedidoExpressBO {
     
     PedidoExpress buscarPorId(int idPedido) throws NegocioException;
     PedidoExpressDTO buscarPorIdDTO(int idPedido) throws NegocioException;
+    
+    void validarPin(int idPedido, String pinIngresado) throws NegocioException;
 }

@@ -212,7 +212,8 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
                 p.subtotal,
                 p.total,
                 p.estado,
-                p.fecha_creacion
+                p.fecha_creacion,
+                pe.pin_seguridad
             FROM PEDIDO p
             JOIN EXPRESS pe ON p.id_pedido = pe.id_pedido
             WHERE p.id_pedido = ?
@@ -288,5 +289,31 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
         }
 
         return lista;
+    }
+    
+    @Override
+    public boolean validarPin(int idPedido, String pinIngresado) throws PersistenciaException {
+
+        String sql = """
+            SELECT 1
+            FROM EXPRESS
+            WHERE id_pedido = ?
+            AND pin_seguridad = SHA2(?, 256)
+        """;
+
+        try (Connection conn = conexionBD.crearConexion();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idPedido);
+            ps.setString(2, pinIngresado);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next(); // true si el PIN coincide
+            }
+
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "Error al validar PIN del pedido express", ex);
+            throw new PersistenciaException("Error al validar PIN del pedido express", ex);
+        }
     }
 }

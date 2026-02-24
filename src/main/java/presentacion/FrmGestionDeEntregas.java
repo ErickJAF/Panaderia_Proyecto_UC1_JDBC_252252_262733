@@ -359,6 +359,32 @@ public class FrmGestionDeEntregas extends JFrame {
 
         try {
 
+            boolean esExpress = (pedido.getNombreCliente() == null);
+
+            if (esExpress) {
+
+                JPasswordField passwordField = new JPasswordField();
+
+                int opcion = JOptionPane.showConfirmDialog(
+                        this,
+                        passwordField,
+                        "Ingrese PIN de seguridad",
+                        JOptionPane.OK_CANCEL_OPTION,
+                        JOptionPane.PLAIN_MESSAGE
+                );
+
+                if (opcion != JOptionPane.OK_OPTION) {
+                    return; // Canceló
+                }
+
+                String pinIngresado = new String(passwordField.getPassword());
+
+                pedidoExpressBO.validarPin(
+                        pedido.getIdPedido(),
+                        pinIngresado
+                );
+            }
+
             if ("Entregado".equalsIgnoreCase(nuevoEstado)) {
 
                 String metodoPago = (String) JOptionPane.showInputDialog(
@@ -382,7 +408,7 @@ public class FrmGestionDeEntregas extends JFrame {
                 );
             }
 
-            if (pedido.getNombreCliente() == null) {
+            if (esExpress) {
                 pedidoExpressBO.actualizarEstado(pedido.getIdPedido(), nuevoEstado);
             } else {
                 pedidoProgramadoBO.actualizarEstado(pedido.getIdPedido(), nuevoEstado);

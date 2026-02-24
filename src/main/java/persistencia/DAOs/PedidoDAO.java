@@ -267,13 +267,13 @@ public class PedidoDAO implements IPedidoDAO{
 
         String sql = """
             SELECT p.id_pedido,
-                    p.estado,
-                    p.total,
-                    c.nombre_completo
-             FROM PEDIDO p
-             LEFT JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
-             LEFT JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
-             WHERE p.id_pedido = ?
+                        p.estado,
+                        p.total,
+                        c.nombre_completo
+                 FROM PEDIDO p
+                 LEFT JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
+                 LEFT JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
+                 WHERE p.id_pedido = ?
         """;
 
         try (Connection con = conexionBD.crearConexion();

@@ -152,11 +152,11 @@ VALUES
 
 INSERT INTO EXPRESS (id_pedido, folio, pin_seguridad)
 VALUES
-(2, 1, '1234HASH'),
-(3, 2, '1234HASH'),
-(4, 3, '1234HASH'),
-(5, 4, '1234HASH'),
-(6, 5, '1234HASH');
+(2, 1, SHA2('1234', 256)),
+(3, 2, SHA2('5678', 256)),
+(4, 3, SHA2('4321', 256)),
+(5, 4, SHA2('9876', 256)),
+(6, 5, SHA2('1111', 256));
 
 INSERT INTO DETALLE_PEDIDO (cantidad, nota, precio_unitario, id_pedido, id_producto)
 VALUES
