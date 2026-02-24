@@ -3,6 +3,8 @@ package presentacion;
 import negocio.BOs.Sesion;
 import negocio.DTOs.UsuarioDTO;
 import negocio.BOs.IUsuarioBO;
+import negocio.BOs.IProductoBO;
+import negocio.BOs.IPedidoExpressBO;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,14 +12,22 @@ import java.awt.*;
 public class FrmPanelEmpleado extends JFrame {
 
     private final IUsuarioBO usuarioBO;
+    private final IProductoBO productoBO;
+    private final IPedidoExpressBO pedidoExpressBO;
 
     private JButton btnPendientes;
     private JButton btnBuscar;
     private JButton btnEntregaPago;
     private JButton btnCerrarSesion;
 
-    public FrmPanelEmpleado(IUsuarioBO usuarioBO) {
+    public FrmPanelEmpleado(IUsuarioBO usuarioBO,
+                            IProductoBO productoBO,
+                            IPedidoExpressBO pedidoExpressBO) {
+
         this.usuarioBO = usuarioBO;
+        this.productoBO = productoBO;
+        this.pedidoExpressBO = pedidoExpressBO;
+
         inicializar();
     }
 
@@ -60,8 +70,11 @@ public class FrmPanelEmpleado extends JFrame {
     }
 
     private void cerrarSesion() {
+
         Sesion.cerrarSesion();
         dispose();
-        new FrmLogin(usuarioBO).setVisible(true);
+
+        new FrmLogin(usuarioBO, productoBO, pedidoExpressBO)
+                .setVisible(true);
     }
 }

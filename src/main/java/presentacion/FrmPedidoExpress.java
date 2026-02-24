@@ -23,7 +23,7 @@ public class FrmPedidoExpress extends JFrame {
 
     private JPanel panelProductos;
     private JPanel panelDetalles;
-    private JLabel lblNombre, lblPrecio, lblDescripcion;
+    private JLabel lblNombre, lblPrecio, lblDescripcion, lblTotalGeneral;
     private JTextField txtCantidad;
     private JTextArea txtNota;
     private JButton btnAgregar, btnFinalizar;
@@ -81,43 +81,33 @@ public class FrmPedidoExpress extends JFrame {
         panelDetalles.add(lblNombre, gbc);
 
         lblPrecio = new JLabel("Precio:");
-        lblPrecio.setFont(new Font("Arial", Font.PLAIN, 18));
         gbc.gridy = 1;
         panelDetalles.add(lblPrecio, gbc);
 
         lblDescripcion = new JLabel("Descripción:");
-        lblDescripcion.setFont(new Font("Arial", Font.PLAIN, 16));
         gbc.gridy = 2;
         panelDetalles.add(lblDescripcion, gbc);
 
         gbc.gridwidth = 1;
 
-        JLabel lblCantidad = new JLabel("Cantidad:");
         gbc.gridy = 3; gbc.gridx = 0;
-        panelDetalles.add(lblCantidad, gbc);
+        panelDetalles.add(new JLabel("Cantidad:"), gbc);
 
         txtCantidad = new JTextField("1");
         gbc.gridx = 1;
         panelDetalles.add(txtCantidad, gbc);
 
-        JLabel lblNota = new JLabel("Nota:");
         gbc.gridy = 4; gbc.gridx = 0;
-        panelDetalles.add(lblNota, gbc);
+        panelDetalles.add(new JLabel("Nota:"), gbc);
 
         txtNota = new JTextArea(3,20);
         txtNota.setLineWrap(true);
         txtNota.setWrapStyleWord(true);
-        JScrollPane scrollNota = new JScrollPane(txtNota);
         gbc.gridx = 1;
-        panelDetalles.add(scrollNota, gbc);
+        panelDetalles.add(new JScrollPane(txtNota), gbc);
 
-        btnAgregar = new JButton("Agregar al pedido");
-        btnAgregar.setBackground(new Color(0,123,255));
-        btnAgregar.setForeground(Color.WHITE);
-
+        btnAgregar = new JButton("Agregar");
         btnFinalizar = new JButton("Finalizar Pedido");
-        btnFinalizar.setBackground(new Color(40,167,69));
-        btnFinalizar.setForeground(Color.WHITE);
 
         gbc.gridy = 5; gbc.gridx = 0;
         panelDetalles.add(btnAgregar, gbc);
@@ -126,17 +116,25 @@ public class FrmPedidoExpress extends JFrame {
         panelDetalles.add(btnFinalizar, gbc);
 
         listaDetalles = new JList<>(modeloLista);
-        listaDetalles.setBorder(BorderFactory.createTitledBorder("Detalles del pedido"));
         gbc.gridy = 6; gbc.gridx = 0;
         gbc.gridwidth = 2;
         gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1; gbc.weighty = 1;
         panelDetalles.add(new JScrollPane(listaDetalles), gbc);
 
+        lblTotalGeneral = new JLabel("Total: $0.00");
+        lblTotalGeneral.setFont(new Font("Arial", Font.BOLD, 18));
+
+        gbc.gridy = 7;
+        gbc.weighty = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panelDetalles.add(lblTotalGeneral, gbc);
+
         btnAgregar.addActionListener(e -> agregarDetalle());
         btnFinalizar.addActionListener(e -> finalizarPedido());
     }
 
+    // 🔹 CARGAR PRODUCTOS (FALTABA)
     private void cargarProductos() throws NegocioException {
 
         productos = productoBO.obtenerDisponibles();
@@ -180,15 +178,12 @@ public class FrmPedidoExpress extends JFrame {
         lblPrecio.setText("Precio: $" + p.getPrecio());
         lblDescripcion.setText("Descripción: " +
                 (p.getDescripcion() != null ? p.getDescripcion() : "Sin descripción"));
-        txtCantidad.setText("1");
-        txtNota.setText("");
     }
 
     private void agregarDetalle() {
 
         if (productoSeleccionado == null) {
-            JOptionPane.showMessageDialog(this,
-                    "Selecciona un producto primero");
+            JOptionPane.showMessageDialog(this,"Selecciona un producto primero");
             return;
         }
 
@@ -205,18 +200,17 @@ public class FrmPedidoExpress extends JFrame {
 
             detallesPedido.add(detalle);
             modeloLista.addElement(productoSeleccionado.getNombre() + " x" + cantidad);
+            actualizarTotal();
 
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Cantidad inválida");
+            JOptionPane.showMessageDialog(this,"Cantidad inválida");
         }
     }
 
     private void finalizarPedido() {
 
         if (detallesPedido.isEmpty()) {
-            JOptionPane.showMessageDialog(this,
-                    "Agrega productos al pedido");
+            JOptionPane.showMessageDialog(this,"Agrega productos al pedido");
             return;
         }
 
@@ -235,15 +229,12 @@ public class FrmPedidoExpress extends JFrame {
 
             JOptionPane.showMessageDialog(this,
                     "Pedido registrado exitosamente\n\n"
-                    + "Folio: " + resultado.getFolio()
-                    + "\nPIN: " + resultado.getPin(),
-                    "Pedido Express",
-                    JOptionPane.INFORMATION_MESSAGE);
+                            + "Folio: " + resultado.getFolio()
+                            + "\nPIN: " + resultado.getPin());
 
             limpiarFormulario();
 
         } catch (NegocioException ex) {
-
             JOptionPane.showMessageDialog(this,
                     ex.getMessage(),
                     "Error",
@@ -252,24 +243,21 @@ public class FrmPedidoExpress extends JFrame {
     }
 
     private double calcularSubtotal() {
-
         double subtotal = 0;
-
         for (DetallePedidoDTO d : detallesPedido) {
             subtotal += d.getCantidad() * d.getPrecioUnitario();
         }
-
         return subtotal;
     }
 
-    private void limpiarFormulario() {
+    private void actualizarTotal() {
+        lblTotalGeneral.setText(
+                "Total: $" + String.format("%.2f", calcularSubtotal()));
+    }
 
+    private void limpiarFormulario() {
         detallesPedido.clear();
         modeloLista.clear();
-        lblNombre.setText("Nombre:");
-        lblPrecio.setText("Precio:");
-        lblDescripcion.setText("Descripción:");
-        txtCantidad.setText("1");
-        txtNota.setText("");
+        lblTotalGeneral.setText("Total: $0.00");
     }
 }

@@ -41,13 +41,7 @@ public class FrmInicio extends JFrame {
         lblTitulo.setFont(new Font("Arial", Font.BOLD, 36));
         lblTitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel lblSubtitulo = new JLabel("Sistema panadería");
-        lblSubtitulo.setFont(new Font("Arial", Font.PLAIN, 18));
-        lblSubtitulo.setAlignmentX(Component.CENTER_ALIGNMENT);
-
         panel.add(lblTitulo);
-        panel.add(Box.createRigidArea(new Dimension(0,10)));
-        panel.add(lblSubtitulo);
         panel.add(Box.createRigidArea(new Dimension(0,60)));
 
         JButton btnLogin = crearBoton("Iniciar sesión");
@@ -57,15 +51,14 @@ public class FrmInicio extends JFrame {
         panel.add(Box.createRigidArea(new Dimension(0,20)));
         panel.add(btnExpress);
 
-        add(panel, BorderLayout.CENTER);
+        add(panel);
 
-        // LOGIN
         btnLogin.addActionListener(e -> {
             dispose();
-            new FrmLogin(usuarioBO).setVisible(true);
+            new FrmLogin(usuarioBO, productoBO, pedidoExpressBO)
+                    .setVisible(true);
         });
 
-        // PEDIDO EXPRESS
         btnExpress.addActionListener(e -> {
             dispose();
             new FrmPedidoExpress(productoBO, pedidoExpressBO)

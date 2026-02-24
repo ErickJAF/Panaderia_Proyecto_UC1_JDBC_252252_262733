@@ -1,24 +1,33 @@
 package presentacion;
 
-
 import negocio.DTOs.UsuarioDTO;
 import negocio.BOs.IUsuarioBO;
+import negocio.BOs.IProductoBO;
+import negocio.BOs.IPedidoExpressBO;
+import negocio.BOs.Sesion;
 
 import javax.swing.*;
 import java.awt.*;
-import negocio.BOs.Sesion;
 
 public class FrmMenuCliente extends JFrame {
 
     private final IUsuarioBO usuarioBO;
+    private final IProductoBO productoBO;
+    private final IPedidoExpressBO pedidoExpressBO;
 
     private JButton btnCrearPedido;
     private JButton btnHistorial;
     private JButton btnPerfil;
     private JButton btnCerrarSesion;
 
-    public FrmMenuCliente(IUsuarioBO usuarioBO) {
+    public FrmMenuCliente(IUsuarioBO usuarioBO,
+                          IProductoBO productoBO,
+                          IPedidoExpressBO pedidoExpressBO) {
+
         this.usuarioBO = usuarioBO;
+        this.productoBO = productoBO;
+        this.pedidoExpressBO = pedidoExpressBO;
+
         inicializar();
     }
 
@@ -37,7 +46,7 @@ public class FrmMenuCliente extends JFrame {
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
         panel.setBackground(Color.WHITE);
 
-        btnCrearPedido = crearBoton("Crear Pedido Programado");
+        btnCrearPedido = crearBoton("Pedido Express");
         btnHistorial = crearBoton("Ver Historial");
         btnPerfil = crearBoton("Editar Perfil");
         btnCerrarSesion = crearBoton("Cerrar Sesión");
@@ -48,6 +57,13 @@ public class FrmMenuCliente extends JFrame {
         panel.add(btnCerrarSesion);
 
         add(panel, BorderLayout.CENTER);
+
+        // 🔹 Eventos
+
+        btnCrearPedido.addActionListener(e -> {
+            new FrmPedidoExpress(productoBO, pedidoExpressBO)
+                    .setVisible(true);
+        });
 
         btnCerrarSesion.addActionListener(e -> cerrarSesion());
     }
@@ -61,8 +77,11 @@ public class FrmMenuCliente extends JFrame {
     }
 
     private void cerrarSesion() {
+
         Sesion.cerrarSesion();
         dispose();
-        new FrmLogin(usuarioBO).setVisible(true);
+
+        new FrmLogin(usuarioBO, productoBO, pedidoExpressBO)
+                .setVisible(true);
     }
 }
