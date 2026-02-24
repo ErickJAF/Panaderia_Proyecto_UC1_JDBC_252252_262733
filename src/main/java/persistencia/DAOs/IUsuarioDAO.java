@@ -17,4 +17,6 @@ public interface IUsuarioDAO {
 
     Usuario autenticar(String nombreUsuario, String contrasena)
             throws PersistenciaException;
+    int insertar(String nombreUsuario, String rol, String contrasena)
+        throws PersistenciaException;
 }

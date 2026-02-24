@@ -27,18 +27,19 @@ public class ClienteDAO implements IClienteDAO {
     @Override
     public void insertar(Cliente cliente) throws PersistenciaException {
 
-        String sql = "INSERT INTO clientes "
-                + "(nombre_completo, fecha_nacimiento, calle, colonia, numero) "
-                + "VALUES (?, ?, ?, ?, ?)";
+       String sql = "INSERT INTO CLIENTE "
+        + "(id_cliente, nombre_completo, fecha_nacimiento, calle, colonia, numero) "
+        + "VALUES (?, ?, ?, ?, ?, ?)";
 
         try (Connection con = conexion.crearConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, cliente.getNombreCompleto());
-            ps.setDate(2, java.sql.Date.valueOf(cliente.getFechaNacimiento()));
-            ps.setString(3, cliente.getCalle());
-            ps.setString(4, cliente.getColonia());
-            ps.setInt(5, cliente.getNumero());
+            ps.setInt(1, cliente.getIdCliente());
+            ps.setString(2, cliente.getNombreCompleto());
+            ps.setDate(3, java.sql.Date.valueOf(cliente.getFechaNacimiento()));
+            ps.setString(4, cliente.getCalle());
+            ps.setString(5, cliente.getColonia());
+            ps.setInt(6, cliente.getNumero());
 
             ps.executeUpdate();
 
@@ -50,7 +51,7 @@ public class ClienteDAO implements IClienteDAO {
     @Override
     public void actualizar(Cliente cliente) throws PersistenciaException {
 
-        String sql = "UPDATE clientes SET "
+        String sql = "UPDATE CLIENTE SET "
                 + "nombre_completo = ?, "
                 + "fecha_nacimiento = ?, "
                 + "calle = ?, "
@@ -78,7 +79,7 @@ public class ClienteDAO implements IClienteDAO {
     @Override
     public Cliente buscarPorId(int idCliente) throws PersistenciaException {
 
-        String sql = "SELECT * FROM clientes WHERE id_cliente = ?";
+        String sql = "SELECT * FROM cliente WHERE id_cliente = ?";
 
         try (Connection con = conexion.crearConexion();
              PreparedStatement ps = con.prepareStatement(sql)) {

@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.util.logging.Logger;
 import negocio.excepciones.NegocioException;
 import persistencia.DAOs.IClienteDAO;
+import persistencia.DAOs.IUsuarioDAO;
 import persistencia.dominio.Cliente;
 import persistencia.excepciones.PersistenciaException;
 
@@ -18,30 +19,47 @@ import persistencia.excepciones.PersistenciaException;
 public class ClienteBO implements IClienteBO{
 
     private final IClienteDAO clienteDAO;
+    private final IUsuarioDAO usuarioDAO;
 
     private static final Logger LOG =
             Logger.getLogger(ClienteBO.class.getName());
 
-    public ClienteBO(IClienteDAO clienteDAO) {
-        this.clienteDAO = clienteDAO;
+  
+    
+    public ClienteBO(IClienteDAO clienteDAO, IUsuarioDAO usuarioDAO) {
+    this.clienteDAO = clienteDAO;
+    this.usuarioDAO = usuarioDAO;
+}
+
+   @Override
+public void registrarCliente(Cliente cliente) throws NegocioException {
+
+    validarCliente(cliente);
+
+    try {
+
+        // 
+        String username = cliente.getNombreCompleto()
+                .toLowerCase()
+                .replace(" ", ".");
+
+        // 
+        int idGenerado = usuarioDAO.insertar(
+                username,
+                "Cliente",
+                "1234"
+        );
+
+        // 
+        cliente.setIdCliente(idGenerado);
+
+        // 
+        clienteDAO.insertar(cliente);
+
+    } catch (PersistenciaException e) {
+        throw new NegocioException("Error al registrar cliente completo.", e);
     }
-
-    @Override
-    public void registrarCliente(Cliente cliente) throws NegocioException {
-
-        LOG.info("Intentando registrar cliente");
-
-        validarCliente(cliente);
-
-        try {
-            clienteDAO.insertar(cliente);
-        } catch (PersistenciaException e) {
-            LOG.severe("Error al registrar cliente");
-            throw new NegocioException("No se pudo registrar el cliente.", e);
-        }
-
-        LOG.info("Cliente registrado correctamente.");
-    }
+}
 
     @Override
     public void actualizarCliente(Cliente cliente) throws NegocioException {

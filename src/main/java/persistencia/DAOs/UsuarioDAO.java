@@ -54,4 +54,35 @@ public class UsuarioDAO implements IUsuarioDAO{
             throw new PersistenciaException("Error al autenticar usuario", e);
         }
     }
+    
+    @Override
+public int insertar(String nombreUsuario, String rol, String contrasena)
+        throws PersistenciaException {
+
+    String sql = """
+        INSERT INTO USUARIO (nombreUsuario, rol, contrasena)
+        VALUES (?, ?, SHA2(?,256))
+    """;
+
+    try (Connection conexion = conexionBD.crearConexion();
+         PreparedStatement ps = conexion.prepareStatement(
+                 sql, Statement.RETURN_GENERATED_KEYS)) {
+
+        ps.setString(1, nombreUsuario);
+        ps.setString(2, rol);
+        ps.setString(3, contrasena);
+
+        ps.executeUpdate();
+
+        ResultSet rs = ps.getGeneratedKeys();
+        if (rs.next()) {
+            return rs.getInt(1);
+        }
+
+        throw new PersistenciaException("No se pudo obtener ID generado.");
+
+    } catch (SQLException e) {
+        throw new PersistenciaException("Error al insertar usuario", e);
+    }
+}
 }
