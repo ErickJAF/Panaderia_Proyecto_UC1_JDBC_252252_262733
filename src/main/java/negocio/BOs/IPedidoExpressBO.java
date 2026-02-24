@@ -1,27 +1,27 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
- */
 package negocio.BOs;
 
 import negocio.DTOs.PedidoExpressDTO;
 import negocio.excepciones.NegocioException;
-import persistencia.dominio.PedidoExpress;
 
 /**
- *
- * @author ERICK
+ * @author Isaias
  */
-
 public interface IPedidoExpressBO {
-    void registrarPedido(PedidoExpress pedido) throws NegocioException;
 
-    void validarTiempoEntrega(PedidoExpress pedido) throws NegocioException;
+    PedidoExpressDTO registrarPedido(PedidoExpressDTO pedido)
+            throws NegocioException;
 
-    void actualizarEstado(int idPedido, String estado) throws NegocioException;
-    
-    PedidoExpress buscarPorId(int idPedido) throws NegocioException;
-    PedidoExpressDTO buscarPorIdDTO(int idPedido) throws NegocioException;
-    
-    void validarPin(int idPedido, String pinIngresado) throws NegocioException;
+    void validarTiempoEntrega(int idPedido)
+            throws NegocioException;
+
+    void actualizarEstado(int idPedido,
+                          String estado)
+            throws NegocioException;
+
+    PedidoExpressDTO buscarPorId(int idPedido)
+            throws NegocioException;
+
+    void validarPin(int idPedido,
+                    String pinIngresado)
+            throws NegocioException;
 }
