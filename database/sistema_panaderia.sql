@@ -2,13 +2,27 @@ DROP DATABASE IF EXISTS sistema_panaderia;
 CREATE DATABASE sistema_panaderia;
 USE sistema_panaderia;
 
+CREATE TABLE USUARIO (
+    id_usuario INT AUTO_INCREMENT PRIMARY KEY,
+    nombreUsuario VARCHAR(40) NOT NULL UNIQUE,
+    rol ENUM('Cliente','Empleado') NOT NULL,
+    contrasena VARCHAR(64) NOT NULL
+);
+
+CREATE TABLE EMPLEADO (
+    id_empleado INT PRIMARY KEY,
+    nombre_completo VARCHAR(100) NOT NULL,
+    FOREIGN KEY (id_empleado) REFERENCES USUARIO(id_usuario)
+);
+
 CREATE TABLE CLIENTE (
-    id_cliente INT AUTO_INCREMENT PRIMARY KEY,
+    id_cliente INT PRIMARY KEY,
     nombre_completo VARCHAR(100) NOT NULL,
     fecha_nacimiento DATE NOT NULL,
     calle VARCHAR(40) NOT NULL,
     colonia VARCHAR(40) NOT NULL,
-    numero INT NOT NULL
+    numero INT NOT NULL,
+    FOREIGN KEY (id_cliente) REFERENCES USUARIO(id_usuario)
 );
 
 CREATE TABLE TELEFONO (
@@ -17,11 +31,6 @@ CREATE TABLE TELEFONO (
     etiqueta VARCHAR(40) NOT NULL,
     id_cliente INT NOT NULL,
     FOREIGN KEY (id_cliente) REFERENCES CLIENTE(id_cliente)
-);
-
-CREATE TABLE EMPLEADO (
-    id_empleado INT AUTO_INCREMENT PRIMARY KEY,
-    nombre_completo VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE PRODUCTO (
@@ -104,22 +113,32 @@ CREATE TABLE HISTORIAL_ESTADO (
 
 -- REGISTROS DE PRUEBA
 
-INSERT INTO EMPLEADO (nombre_completo)
-VALUES 
-('Carlos Ramírez'),
-('Ana López');
-
-INSERT INTO CLIENTE (nombre_completo, fecha_nacimiento, calle, colonia, numero)
+INSERT INTO USUARIO (nombreUsuario, rol, contrasena)
 VALUES
-('Luis Martínez', '1998-05-12', 'Av. Juárez', 'Centro', 120),
-('María González', '2000-08-21', 'Calle Hidalgo', 'Reforma', 45);
+('carlos.emp', 'Empleado', SHA2('1234',256)),
+('ana.emp', 'Empleado', SHA2('1234',256)),
+('luis.cli', 'Cliente', SHA2('1234',256)),
+('maria.cli', 'Cliente', SHA2('1234',256));
+
+INSERT INTO EMPLEADO (id_empleado, nombre_completo)
+VALUES
+(1, 'Carlos Ramírez'),
+(2, 'Ana López');
+
+INSERT INTO CLIENTE (id_cliente, nombre_completo, fecha_nacimiento, calle, colonia, numero)
+VALUES
+(3, 'Luis Martínez', '1998-05-12', 'Av. Juárez', 'Centro', 120),
+(4, 'María González', '2000-08-21', 'Calle Hidalgo', 'Reforma', 45);
 
 INSERT INTO TELEFONO (numero, etiqueta, id_cliente)
 VALUES
-('5551234567', 'Personal', 1),
-('5559876543', 'Trabajo', 1),
-('5551112233', 'Personal', 2);
+('5551234567', 'Personal', 3),
+('5559876543', 'Trabajo', 3),
+('5551112233', 'Personal', 4);
 
+-- =========================
+-- PRODUCTOS
+-- =========================
 INSERT INTO PRODUCTO (nombre, tipo, descripcion, precio, disponible)
 VALUES
 ('Pan de Caja Integral', 'Panadería', 'Pan integral de 500g', 40.00, TRUE),
@@ -148,7 +167,7 @@ VALUES
 
 INSERT INTO PROGRAMADO (id_pedido, id_cliente, id_cupon)
 VALUES
-(1, 1, 1);
+(1, 3, 1);
 
 INSERT INTO EXPRESS (id_pedido, folio, pin_seguridad)
 VALUES
@@ -181,11 +200,11 @@ VALUES
 
 INSERT INTO PROGRAMADO (id_pedido, id_cliente, id_cupon)
 VALUES
-(7, 1, 1),
-(8, 2, 1),
-(9, 1, 1),
-(10, 2, 1),
-(11, 1, 1);
+(7, 3, 1),
+(8, 4, 1),
+(9, 3, 1),
+(10, 4, 1),
+(11, 3, 1);
 
 INSERT INTO DETALLE_PEDIDO (cantidad, nota, precio_unitario, id_pedido, id_producto)
 VALUES
@@ -204,52 +223,8 @@ VALUES
 (3, 'Sin azúcar', 35.00, 11, 4),
 (2, '', 32.00, 11, 8);
 
--- CONSULTAS DE PRUEBA
-
--- 1 Ver pedidos con su empleado
-SELECT p.id_pedido, p.estado, e.nombre_completo AS empleado
-FROM PEDIDO p
-JOIN EMPLEADO e ON p.id_empleado = e.id_empleado;
-
--- 2 Ver pedidos programados con nombre del cliente
-SELECT pe.id_pedido, c.nombre_completo
-FROM PROGRAMADO pe
-JOIN CLIENTE c ON pe.id_cliente = c.id_cliente;
-
--- 3 Ver detalle de pedido con nombre del producto
-SELECT dp.id_pedido, pr.nombre, dp.cantidad, dp.precio_unitario
-FROM DETALLE_PEDIDO dp
-JOIN PRODUCTO pr ON dp.id_producto = pr.id_producto;
-
--- 4 Ver total vendido (pedidos listos o entregados)
-SELECT SUM(total) AS total_vendido
-FROM PEDIDO
-WHERE estado = 'Entregado' OR estado = 'Listo';
-
--- 5 Ver pagos realizados
-SELECT p.id_pago, p.monto, pe.estado
-FROM PAGO p
-JOIN PEDIDO pe ON p.id_pedido = pe.id_pedido;
-
--- 6 Cantidad de pedidos por cliente
-SELECT c.nombre_completo, COUNT(pe.id_pedido) AS total_pedidos
-FROM CLIENTE c
-LEFT JOIN PROGRAMADO pe ON c.id_cliente = pe.id_cliente
-GROUP BY c.nombre_completo;
-
--- 7 Total vendido por empleado
-SELECT e.nombre_completo, SUM(p.total) AS total_generado
-FROM EMPLEADO e
-JOIN PEDIDO p ON e.id_empleado = p.id_empleado
-GROUP BY e.nombre_completo;
-
--- 8 Pedidos pendientes
-SELECT * 
-FROM programado;
-
 DELIMITER //
 
--- SP
 CREATE PROCEDURE sp_crear_pedido_programado(
     IN p_fecha DATETIME,
     IN p_estado VARCHAR(30),
@@ -304,9 +279,9 @@ BEGIN
     SET p_id_generado = nuevo_id;
 
     COMMIT;
+
 END //
 
--- Trigger
 CREATE TRIGGER trg_historial_estado
 BEFORE UPDATE ON PEDIDO
 FOR EACH ROW
@@ -328,23 +303,3 @@ BEGIN
 END //
 
 DELIMITER ;
-
-UPDATE PEDIDO
-SET estado = 'Entregado'
-WHERE id_pedido = 1;
-
-SELECT * FROM HISTORIAL_ESTADO;
-
-UPDATE PEDIDO
-SET estado = 'Entregado'
-WHERE id_pedido = 2;
-
-SELECT h.id_historial, h.id_pedido, h.estado_anterior, 
-       h.estado_nuevo, h.fecha_cambio, p.total
-FROM HISTORIAL_ESTADO h
-JOIN PEDIDO p ON h.id_pedido = p.id_pedido
-JOIN EXPRESS e ON p.id_pedido = e.id_pedido
-WHERE e.folio = 2
-ORDER BY h.fecha_cambio ASC;
-
-SELECT * FROM PAGO;
