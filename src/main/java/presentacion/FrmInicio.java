@@ -3,6 +3,7 @@ package presentacion;
 import negocio.BOs.IUsuarioBO;
 import negocio.BOs.IProductoBO;
 import negocio.BOs.IPedidoExpressBO;
+import negocio.BOs.IPedidoProgramadoBO;
 
 import javax.swing.*;
 import java.awt.*;
@@ -12,14 +13,17 @@ public class FrmInicio extends JFrame {
     private final IUsuarioBO usuarioBO;
     private final IProductoBO productoBO;
     private final IPedidoExpressBO pedidoExpressBO;
+    private final IPedidoProgramadoBO pedidoProgramadoBO;
 
     public FrmInicio(IUsuarioBO usuarioBO,
                      IProductoBO productoBO,
-                     IPedidoExpressBO pedidoExpressBO) {
+                     IPedidoExpressBO pedidoExpressBO,
+                     IPedidoProgramadoBO pedidoProgramadoBO) {
 
         this.usuarioBO = usuarioBO;
         this.productoBO = productoBO;
         this.pedidoExpressBO = pedidoExpressBO;
+        this.pedidoProgramadoBO = pedidoProgramadoBO;
 
         inicializar();
     }
@@ -53,16 +57,24 @@ public class FrmInicio extends JFrame {
 
         add(panel);
 
+        // LOGIN
         btnLogin.addActionListener(e -> {
             dispose();
-            new FrmLogin(usuarioBO, productoBO, pedidoExpressBO)
-                    .setVisible(true);
+            new FrmLogin(
+                    usuarioBO,
+                    productoBO,
+                    pedidoExpressBO,
+                    pedidoProgramadoBO
+            ).setVisible(true);
         });
 
+        // PEDIDO EXPRESS (sin login)
         btnExpress.addActionListener(e -> {
             dispose();
-            new FrmPedidoExpress(productoBO, pedidoExpressBO)
-                    .setVisible(true);
+            new FrmPedidoExpress(
+                    productoBO,
+                    pedidoExpressBO
+            ).setVisible(true);
         });
     }
 

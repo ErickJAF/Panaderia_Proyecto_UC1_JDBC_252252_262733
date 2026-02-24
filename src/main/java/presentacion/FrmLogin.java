@@ -3,6 +3,7 @@ package presentacion;
 import negocio.BOs.IUsuarioBO;
 import negocio.BOs.IProductoBO;
 import negocio.BOs.IPedidoExpressBO;
+import negocio.BOs.IPedidoProgramadoBO;
 import negocio.DTOs.UsuarioDTO;
 import negocio.BOs.Sesion;
 import negocio.excepciones.NegocioException;
@@ -15,17 +16,20 @@ public class FrmLogin extends JFrame {
     private final IUsuarioBO usuarioBO;
     private final IProductoBO productoBO;
     private final IPedidoExpressBO pedidoExpressBO;
+    private final IPedidoProgramadoBO pedidoProgramadoBO;
 
     private JTextField txtUsuario;
     private JPasswordField txtPassword;
 
     public FrmLogin(IUsuarioBO usuarioBO,
                     IProductoBO productoBO,
-                    IPedidoExpressBO pedidoExpressBO) {
+                    IPedidoExpressBO pedidoExpressBO,
+                    IPedidoProgramadoBO pedidoProgramadoBO) {
 
         this.usuarioBO = usuarioBO;
         this.productoBO = productoBO;
         this.pedidoExpressBO = pedidoExpressBO;
+        this.pedidoProgramadoBO = pedidoProgramadoBO;
 
         inicializar();
     }
@@ -46,7 +50,11 @@ public class FrmLogin extends JFrame {
         gbc.insets = new Insets(10,10,10,10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
+        // Título
+        gbc.gridx = 0; 
+        gbc.gridy = 0; 
+        gbc.gridwidth = 2;
+
         JLabel titulo = new JLabel("INICIAR SESIÓN");
         titulo.setFont(new Font("Arial", Font.BOLD, 22));
         titulo.setHorizontalAlignment(SwingConstants.CENTER);
@@ -54,26 +62,35 @@ public class FrmLogin extends JFrame {
 
         gbc.gridwidth = 1;
 
-        gbc.gridy = 1; gbc.gridx = 0;
+        // Usuario
+        gbc.gridy = 1; 
+        gbc.gridx = 0;
         panel.add(new JLabel("Usuario:"), gbc);
 
         txtUsuario = new JTextField();
         gbc.gridx = 1;
         panel.add(txtUsuario, gbc);
 
-        gbc.gridy = 2; gbc.gridx = 0;
+        // Password
+        gbc.gridy = 2; 
+        gbc.gridx = 0;
         panel.add(new JLabel("Contraseña:"), gbc);
 
         txtPassword = new JPasswordField();
         gbc.gridx = 1;
         panel.add(txtPassword, gbc);
 
+        // Botón login
         JButton btnLogin = new JButton("Ingresar");
-        gbc.gridy = 3; gbc.gridx = 0; gbc.gridwidth = 2;
+        gbc.gridy = 3; 
+        gbc.gridx = 0; 
+        gbc.gridwidth = 2;
         panel.add(btnLogin, gbc);
 
+        // Botones inferiores
         JButton btnVolver = new JButton("Volver");
-        gbc.gridy = 4; gbc.gridwidth = 1;
+        gbc.gridy = 4; 
+        gbc.gridwidth = 1;
         gbc.gridx = 0;
         panel.add(btnVolver, gbc);
 
@@ -83,12 +100,18 @@ public class FrmLogin extends JFrame {
 
         add(panel);
 
+        // Eventos
         btnLogin.addActionListener(e -> iniciarSesion());
 
         btnVolver.addActionListener(e -> {
             dispose();
-            new FrmInicio(usuarioBO, productoBO, pedidoExpressBO)
+            new FrmInicio(usuarioBO, productoBO, pedidoExpressBO, pedidoProgramadoBO)
                     .setVisible(true);
+        });
+
+        btnRegistrar.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this,
+                    "Aquí irá el registro de cliente");
         });
     }
 
@@ -105,13 +128,24 @@ public class FrmLogin extends JFrame {
 
             dispose();
 
-            if (usuarioDTO.getRol().equals("Empleado")) {
-                new FrmPanelEmpleado(usuarioBO, productoBO, pedidoExpressBO)
-                        .setVisible(true);
-            } else {
-                new FrmMenuCliente(usuarioBO, productoBO, pedidoExpressBO)
-                        .setVisible(true);
-            }
+if (usuarioDTO.getRol().equalsIgnoreCase("Empleado")) {
+
+    new FrmPanelEmpleado(
+            usuarioBO,
+            productoBO,
+            pedidoExpressBO,
+            pedidoProgramadoBO
+    ).setVisible(true);
+
+} else {
+
+    new FrmMenuCliente(
+            usuarioBO,
+            productoBO,
+            pedidoExpressBO,
+            pedidoProgramadoBO
+    ).setVisible(true);
+}
 
         } catch (NegocioException ex) {
 

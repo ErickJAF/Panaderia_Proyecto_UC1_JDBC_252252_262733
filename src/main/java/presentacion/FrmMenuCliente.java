@@ -3,33 +3,38 @@ package presentacion;
 import negocio.DTOs.UsuarioDTO;
 import negocio.BOs.IUsuarioBO;
 import negocio.BOs.IProductoBO;
-import negocio.BOs.IPedidoExpressBO;
+import negocio.BOs.IPedidoProgramadoBO;
 import negocio.BOs.Sesion;
 
 import javax.swing.*;
 import java.awt.*;
+import negocio.BOs.IPedidoExpressBO;
 
 public class FrmMenuCliente extends JFrame {
 
     private final IUsuarioBO usuarioBO;
     private final IProductoBO productoBO;
+    private final IPedidoProgramadoBO pedidoProgramadoBO;
     private final IPedidoExpressBO pedidoExpressBO;
+
 
     private JButton btnCrearPedido;
     private JButton btnHistorial;
     private JButton btnPerfil;
     private JButton btnCerrarSesion;
 
-    public FrmMenuCliente(IUsuarioBO usuarioBO,
-                          IProductoBO productoBO,
-                          IPedidoExpressBO pedidoExpressBO) {
+   public FrmMenuCliente(IUsuarioBO usuarioBO,
+                      IProductoBO productoBO,
+                      IPedidoExpressBO pedidoExpressBO,
+                      IPedidoProgramadoBO pedidoProgramadoBO) {
 
-        this.usuarioBO = usuarioBO;
-        this.productoBO = productoBO;
-        this.pedidoExpressBO = pedidoExpressBO;
+    this.usuarioBO = usuarioBO;
+    this.productoBO = productoBO;
+    this.pedidoExpressBO = pedidoExpressBO;
+    this.pedidoProgramadoBO = pedidoProgramadoBO;
 
-        inicializar();
-    }
+    inicializar();
+}
 
     private void inicializar() {
 
@@ -46,7 +51,7 @@ public class FrmMenuCliente extends JFrame {
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
         panel.setBackground(Color.WHITE);
 
-        btnCrearPedido = crearBoton("Pedido Express");
+        btnCrearPedido = crearBoton("Crear Pedido Programado");
         btnHistorial = crearBoton("Ver Historial");
         btnPerfil = crearBoton("Editar Perfil");
         btnCerrarSesion = crearBoton("Cerrar Sesión");
@@ -58,11 +63,23 @@ public class FrmMenuCliente extends JFrame {
 
         add(panel, BorderLayout.CENTER);
 
-        // 🔹 Eventos
-
+        // 🔹 Evento correcto
         btnCrearPedido.addActionListener(e -> {
-            new FrmPedidoExpress(productoBO, pedidoExpressBO)
-                    .setVisible(true);
+            try {
+                new FrmCrearPedidoProgramado(
+                        null, // ya no necesitas pasar conexión aquí realmente
+                        productoBO,
+                        pedidoProgramadoBO,
+                        1, // idEmpleado (puedes manejarlo mejor después)
+                        usuario.getId()
+                ).setVisible(true);
+
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(this,
+                        ex.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
         });
 
         btnCerrarSesion.addActionListener(e -> cerrarSesion());
@@ -81,7 +98,11 @@ public class FrmMenuCliente extends JFrame {
         Sesion.cerrarSesion();
         dispose();
 
-        new FrmLogin(usuarioBO, productoBO, pedidoExpressBO)
-                .setVisible(true);
+        new FrmLogin(
+        usuarioBO,
+        productoBO,
+        pedidoExpressBO,
+        pedidoProgramadoBO
+).setVisible(true);
     }
 }

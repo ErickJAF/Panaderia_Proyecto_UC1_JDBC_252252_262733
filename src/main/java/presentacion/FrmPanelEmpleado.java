@@ -8,28 +8,32 @@ import negocio.BOs.IPedidoExpressBO;
 
 import javax.swing.*;
 import java.awt.*;
+import negocio.BOs.IPedidoProgramadoBO;
 
 public class FrmPanelEmpleado extends JFrame {
 
     private final IUsuarioBO usuarioBO;
     private final IProductoBO productoBO;
     private final IPedidoExpressBO pedidoExpressBO;
+    private final IPedidoProgramadoBO pedidoProgramadoBO;
 
     private JButton btnPendientes;
     private JButton btnBuscar;
     private JButton btnEntregaPago;
     private JButton btnCerrarSesion;
 
-    public FrmPanelEmpleado(IUsuarioBO usuarioBO,
-                            IProductoBO productoBO,
-                            IPedidoExpressBO pedidoExpressBO) {
+   public FrmPanelEmpleado(IUsuarioBO usuarioBO,
+                        IProductoBO productoBO,
+                        IPedidoExpressBO pedidoExpressBO,
+                        IPedidoProgramadoBO pedidoProgramadoBO) {
 
-        this.usuarioBO = usuarioBO;
-        this.productoBO = productoBO;
-        this.pedidoExpressBO = pedidoExpressBO;
+    this.usuarioBO = usuarioBO;
+    this.productoBO = productoBO;
+    this.pedidoExpressBO = pedidoExpressBO;
+    this.pedidoProgramadoBO = pedidoProgramadoBO;
 
-        inicializar();
-    }
+    inicializar();
+}
 
     private void inicializar() {
 
@@ -74,7 +78,11 @@ public class FrmPanelEmpleado extends JFrame {
         Sesion.cerrarSesion();
         dispose();
 
-        new FrmLogin(usuarioBO, productoBO, pedidoExpressBO)
-                .setVisible(true);
+        new FrmLogin(
+        usuarioBO,
+        productoBO,
+        pedidoExpressBO,
+        pedidoProgramadoBO
+).setVisible(true);
     }
 }
