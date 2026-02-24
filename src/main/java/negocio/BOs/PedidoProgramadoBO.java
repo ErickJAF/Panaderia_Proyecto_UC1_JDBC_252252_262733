@@ -10,7 +10,9 @@ import persistencia.dominio.PedidoProgramado;
 import java.time.LocalDate;
 import java.util.logging.Logger;
 import negocio.excepciones.NegocioException;
+import persistencia.DAOs.ICuponDAO;
 import persistencia.DAOs.IDetallePedidoDAO;
+import persistencia.dominio.Cupon;
 import persistencia.excepciones.PersistenciaException;
 
 /**
@@ -21,15 +23,19 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO{
     
     private final IDetallePedidoDAO detalleDAO;
     private final IPedidoProgramadoDAO pedidoDAO;
+    private ICuponDAO cuponDAO;
+    private CuponBO cuponBO;
 
     private static final Logger LOG = Logger.getLogger(PedidoProgramadoBO.class.getName());
 
-    public PedidoProgramadoBO(
-        IPedidoProgramadoDAO pedidoDAO,
-        IDetallePedidoDAO detalleDAO) {
+    public PedidoProgramadoBO(IPedidoProgramadoDAO pedidoDAO,
+                          IDetallePedidoDAO detalleDAO,
+                          ICuponDAO cuponDAO) {
 
     this.pedidoDAO = pedidoDAO;
     this.detalleDAO = detalleDAO;
+    this.cuponDAO = cuponDAO;
+    this.cuponBO = new CuponBO(cuponDAO);
 }
 
 @Override
@@ -50,12 +56,29 @@ public void registrarPedido(PedidoProgramadoDTO dto)
 
         subtotalCalculado += d.getCantidad() * d.getPrecioUnitario();
     }
+    
+    double descuentoCalculado = 0;
+    Integer idCuponAplicado = null;
+
+    if (dto.getIdCupon() != null) {
+
+    Cupon cuponValido = cuponBO.validarCuponPorId(dto.getIdCupon());
+
+    descuentoCalculado = subtotalCalculado *
+            cuponValido.getDescuento().doubleValue();
+
+    idCuponAplicado = cuponValido.getIdCupon().intValue();
+    }
 
     if (Math.abs(subtotalCalculado - dto.getSubtotal()) > 0.01) {
         throw new NegocioException("El subtotal no coincide con el cálculo interno.");
     }
 
-    double totalCalculado = subtotalCalculado - dto.getDescuento();
+   if (Math.abs(descuentoCalculado - dto.getDescuento()) > 0.01) {
+    throw new NegocioException("El descuento no coincide con el cálculo interno.");
+}
+
+double totalCalculado = subtotalCalculado - descuentoCalculado;
 
     if (Math.abs(totalCalculado - dto.getTotal()) > 0.01) {
         throw new NegocioException("El total no coincide con el cálculo interno.");
@@ -69,7 +92,7 @@ public void registrarPedido(PedidoProgramadoDTO dto)
     pedido.setTotal(dto.getTotal());
     pedido.setIdEmpleado(dto.getIdEmpleado());
     pedido.setIdCliente(dto.getIdCliente());
-    pedido.setIdCupon(dto.getIdCupon());
+    pedido.setIdCupon(idCuponAplicado);
 
     try {
 
@@ -79,6 +102,9 @@ public void registrarPedido(PedidoProgramadoDTO dto)
 
         for (var d : dto.getDetalles()) {
             detalleDAO.insertar(idPedido, d);
+        }
+        if (idCuponAplicado != null) {
+        cuponBO.aplicarUso(Long.valueOf(idCuponAplicado));
         }
 
     } catch (PersistenciaException e) {
