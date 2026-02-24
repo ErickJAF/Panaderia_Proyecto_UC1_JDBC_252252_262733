@@ -19,4 +19,5 @@ public interface IPedidoProgramadoBO {
     
     PedidoProgramado buscarPorId(int idPedido) throws NegocioException;
     PedidoProgramadoDTO buscarPorIdDTO(int idPedido) throws NegocioException;
+    double calcularDescuento(String codigoCupon, double subtotal) throws NegocioException;
 }

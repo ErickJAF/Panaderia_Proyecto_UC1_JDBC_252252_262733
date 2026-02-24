@@ -12,7 +12,7 @@ import java.time.LocalDate;
  * @author ERICK
  */
 public class Cupon {
-    private int idCupon;
+    private Integer idCupon;
     private String codigo;
     private BigDecimal descuento;
     private int usosMaximos;
