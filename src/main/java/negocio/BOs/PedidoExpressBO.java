@@ -1,179 +1,231 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package negocio.BOs;
 
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import negocio.DTOs.PedidoExpressDTO;
 import negocio.excepciones.NegocioException;
 import persistencia.DAOs.IPedidoExpressDAO;
-import persistencia.dominio.PedidoExpress;
 import persistencia.excepciones.PersistenciaException;
 
 /**
- *
- * @author ERICK
+ * @author Isaias
  */
 public class PedidoExpressBO implements IPedidoExpressBO {
 
     private final IPedidoExpressDAO pedidoDAO;
-    private static final Logger LOG = Logger.getLogger(PedidoExpressBO.class.getName());
+    private static final Logger LOG =
+            Logger.getLogger(PedidoExpressBO.class.getName());
 
     public PedidoExpressBO(IPedidoExpressDAO pedidoDAO) {
         this.pedidoDAO = pedidoDAO;
     }
 
+    // 🔐 Generar PIN 8 dígitos
+    private String generarPin() {
+        int numero = (int)(Math.random() * 90000000) + 10000000;
+        return String.valueOf(numero);
+    }
+
+    // 🧾 Registrar pedido (SIN recibir idEmpleado)
     @Override
-    public void registrarPedido(PedidoExpress pedido) throws NegocioException {
-        LOG.info("Registrando pedido express...");
+    public PedidoExpressDTO registrarPedido(PedidoExpressDTO pedido)
+            throws NegocioException {
+
         if (pedido.getTotal() <= 0) {
-            throw new NegocioException("El total del pedido debe ser mayor a cero.");
+            throw new NegocioException(
+                    "El total del pedido debe ser mayor a cero.");
         }
-        pedido.setFechaCreacion(LocalDate.now());
-        pedido.setEstado("Pendiente");
+
         try {
-            pedidoDAO.insertar(pedido);
-            LOG.info("Pedido express registrado con éxito. ID: " + pedido.getIdPedido());
+
+            // 🔹 Obtener empleado automáticamente
+            int idEmpleado = pedidoDAO.obtenerEmpleadoDisponible();
+
+            if (idEmpleado <= 0) {
+                throw new NegocioException(
+                        "No hay empleados disponibles.");
+            }
+
+            int folio = pedidoDAO.obtenerSiguienteFolio();
+            String pin = generarPin();
+
+            pedido.setFolio(folio);
+            pedido.setPin(pin);
+            pedido.setEstado("Pendiente");
+            pedido.setFechaCreacion(LocalDateTime.now());
+
+            pedidoDAO.insertar(pedido, idEmpleado);
+
+            LOG.info("Pedido express registrado. Folio: " + folio);
+
+            return pedido;
+
         } catch (PersistenciaException ex) {
-            LOG.log(Level.SEVERE, "Error al registrar pedido express", ex);
-            throw new NegocioException("No se pudo registrar el pedido express.", ex);
+            LOG.log(Level.SEVERE,
+                    "Error al registrar pedido express", ex);
+            throw new NegocioException(
+                    "No se pudo registrar el pedido express.", ex);
         }
     }
 
+    // ⏱ Validar 20 minutos usando fechaListo
     @Override
-    public void validarTiempoEntrega(PedidoExpress pedido) throws NegocioException {
-        LOG.info("Validando tiempo de entrega del pedido...");
+    public void validarTiempoEntrega(int idPedido)
+            throws NegocioException {
 
-        if (pedido.getFechaListo() == null) {
-            throw new NegocioException("El pedido aún no tiene fecha de listo.");
-        }
+        try {
 
-        if (!pedido.getEstado().equals("Listo")) {
-            LOG.info("Pedido no está en estado Listo, no se aplica la validación de tiempo.");
-            return;
-        }
+            PedidoExpressDTO pedido =
+                    pedidoDAO.buscarPorId(idPedido);
 
-        Duration tiempoTranscurrido = Duration.between(pedido.getFechaListo(), LocalDateTime.now());
-        if (tiempoTranscurrido.toMinutes() > 20) {
-            LOG.warning("El pedido ha superado el tiempo estimado de entrega. Marcando como No Entregado...");
-            try {
-                pedidoDAO.actualizarEstado(pedido.getIdPedido(), "No Entregado");
-            } catch (PersistenciaException ex) {
-                LOG.log(Level.SEVERE, "Error al actualizar el estado a No Entregado", ex);
-                throw new NegocioException("No se pudo actualizar el estado a No Entregado", ex);
+            if (pedido == null) {
+                throw new NegocioException(
+                        "Pedido no encontrado.");
             }
-            throw new NegocioException("El pedido ha superado el tiempo estimado de entrega y se marcó como No Entregado.");
-        }
 
-        LOG.info("Tiempo de entrega dentro de lo permitido.");
+            if (!"Listo".equals(pedido.getEstado())) {
+                return;
+            }
+
+            if (pedido.getFechaListo() == null) {
+                return;
+            }
+
+            Duration tiempo =
+                    Duration.between(
+                            pedido.getFechaListo(),
+                            LocalDateTime.now());
+
+            if (tiempo.toMinutes() > 20) {
+
+                pedidoDAO.actualizarEstado(
+                        idPedido, "No Entregado");
+
+                throw new NegocioException(
+                        "El pedido superó los 20 minutos y fue marcado como No Entregado.");
+            }
+
+        } catch (PersistenciaException ex) {
+            throw new NegocioException(
+                    "Error al validar tiempo.", ex);
+        }
     }
 
+    // 🔄 Actualizar estado con reglas correctas
     @Override
-    public void actualizarEstado(int idPedido, String nuevoEstado) throws NegocioException {
+    public void actualizarEstado(int idPedido,
+                                 String nuevoEstado)
+            throws NegocioException {
+
         if (nuevoEstado == null || nuevoEstado.isBlank()) {
-            throw new NegocioException("El estado no puede ser vacío");
+            throw new NegocioException(
+                    "El estado no puede ser vacío");
         }
 
         try {
-            PedidoExpress pedido = pedidoDAO.buscarPorId(idPedido);
+
+            PedidoExpressDTO pedido =
+                    pedidoDAO.buscarPorId(idPedido);
+
             if (pedido == null) {
-                throw new NegocioException("No se encontró el pedido con ID " + idPedido);
+                throw new NegocioException(
+                        "No se encontró el pedido.");
             }
 
-            String estadoActual = pedido.getEstado();
+            String actual = pedido.getEstado();
 
             switch (nuevoEstado) {
+
                 case "Listo":
-                    if (!estadoActual.equals("Pendiente")) {
-                        throw new NegocioException("Solo los pedidos Pendientes pueden marcarse como Listo");
+                    if (!"Pendiente".equals(actual)) {
+                        throw new NegocioException(
+                                "Solo Pendiente puede pasar a Listo");
                     }
+
+                    pedidoDAO.actualizarFechaListo(
+                            idPedido, LocalDateTime.now());
                     break;
 
                 case "Entregado":
-                    if (!estadoActual.equals("Listo")) {
-                        throw new NegocioException("Solo los pedidos Listos pueden entregarse");
+                    if (!"Listo".equals(actual)) {
+                        throw new NegocioException(
+                                "Solo Listo puede pasar a Entregado");
                     }
                     break;
 
                 case "Cancelado":
-                    if (estadoActual.equals("Entregado") || estadoActual.equals("No Entregado")) {
-                        throw new NegocioException("No se puede cancelar un pedido ya entregado o no entregado");
+                    if ("Entregado".equals(actual) ||
+                        "No Entregado".equals(actual)) {
+                        throw new NegocioException(
+                                "No se puede cancelar un pedido finalizado.");
                     }
                     break;
 
                 case "No Entregado":
-                    if (!estadoActual.equals("Listo")) {
-                        throw new NegocioException("Solo los pedidos Listos pueden pasar a No Entregado");
+                    if (!"Listo".equals(actual)) {
+                        throw new NegocioException(
+                                "Solo Listo puede pasar a No Entregado");
                     }
                     break;
 
                 default:
-                    throw new NegocioException("Estado no válido: " + nuevoEstado);
+                    throw new NegocioException(
+                            "Estado inválido: " + nuevoEstado);
             }
-            if (nuevoEstado.equals("Listo")) {
-                pedidoDAO.actualizarFechaListo(idPedido, LocalDateTime.now());
-            }
+
             pedidoDAO.actualizarEstado(idPedido, nuevoEstado);
-            LOG.info("Estado actualizado correctamente. ID: " + idPedido + ", Estado final: " + nuevoEstado);
-            
+
         } catch (PersistenciaException ex) {
-            LOG.severe("Error al actualizar el estado del pedido express. ID: " + idPedido + ", Error: " + ex.getMessage());
-            throw new NegocioException("Error al actualizar el estado del pedido", ex);
+            throw new NegocioException(
+                    "Error al actualizar estado.", ex);
         }
     }
 
+    // 🔍 Buscar
     @Override
-    public PedidoExpress buscarPorId(int idPedido) throws NegocioException {
-        try {
-            PedidoExpress pedido = pedidoDAO.buscarPorId(idPedido);
-            if (pedido == null) {
-                throw new NegocioException("No se encontró el pedido con ID " + idPedido);
-            }
-            return pedido;
-        } catch (PersistenciaException ex) {
-            throw new NegocioException("Error al buscar el pedido por ID", ex);
-        }
-    }
-
-    @Override
-    public PedidoExpressDTO buscarPorIdDTO(int idPedido) throws NegocioException {
-
-        if (idPedido <= 0) {
-            throw new NegocioException("El id del pedido es inválido.");
-        }
+    public PedidoExpressDTO buscarPorId(int idPedido)
+            throws NegocioException {
 
         try {
 
-            PedidoExpressDTO pedido = pedidoDAO.buscarPorIdDTO(idPedido);
+            PedidoExpressDTO pedido =
+                    pedidoDAO.buscarPorId(idPedido);
 
             if (pedido == null) {
-                throw new NegocioException("No se encontró el pedido express con id: " + idPedido);
+                throw new NegocioException(
+                        "Pedido no encontrado.");
             }
 
             return pedido;
 
         } catch (PersistenciaException ex) {
-            throw new NegocioException("Error al buscar el pedido express.", ex);
+            throw new NegocioException(
+                    "Error al buscar pedido.", ex);
         }
     }
-    
+
+    // 🔐 Validar PIN
     @Override
-    public void validarPin(int idPedido, String pinIngresado) throws NegocioException {
+    public void validarPin(int idPedido,
+                           String pinIngresado)
+            throws NegocioException {
 
         try {
-            boolean esValido = pedidoDAO.validarPin(idPedido, pinIngresado);
 
-            if (!esValido) {
-                throw new NegocioException("El PIN es incorrecto.");
+            boolean valido =
+                    pedidoDAO.validarPin(
+                            idPedido, pinIngresado);
+
+            if (!valido) {
+                throw new NegocioException(
+                        "PIN incorrecto.");
             }
 
-        } catch (PersistenciaException e) {
-            throw new NegocioException("Error al validar PIN.", e);
+        } catch (PersistenciaException ex) {
+            throw new NegocioException(
+                    "Error al validar PIN.", ex);
         }
     }
 }

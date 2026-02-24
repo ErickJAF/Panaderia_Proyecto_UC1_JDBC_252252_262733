@@ -1,221 +1,210 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package persistencia.DAOs;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
+import java.sql.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import negocio.DTOs.DetallePedidoDTO;
 import negocio.DTOs.PedidoExpressDTO;
 import persistencia.conexion.IConexionBD;
-import persistencia.dominio.PedidoExpress;
 import persistencia.excepciones.PersistenciaException;
 
 /**
- *
- * @author ERICK
+ * @author Isaias
  */
 public class PedidoExpressDAO implements IPedidoExpressDAO {
 
     private final IConexionBD conexionBD;
-    private static final Logger LOG = Logger.getLogger(PedidoExpressDAO.class.getName());
 
     public PedidoExpressDAO(IConexionBD conexionBD) {
         this.conexionBD = conexionBD;
     }
 
+    // 🔹 NUEVO: Obtener empleado automáticamente
     @Override
-    public void insertar(PedidoExpress pedido) throws PersistenciaException {
-        String sqlPedido = "INSERT INTO PEDIDO (fecha_creacion, estado, subtotal, descuento, total, id_empleado) "
-                         + "VALUES (?, ?, ?, ?, ?, ?)";
-        String sqlExpress = "INSERT INTO EXPRESS (id_pedido, folio, pin_seguridad, fecha_listo) "
-                          + "VALUES (?, ?, ?, ?)";
+    public int obtenerEmpleadoDisponible() throws PersistenciaException {
 
-        try (Connection conn = conexionBD.crearConexion()) {
-            conn.setAutoCommit(false);
+        String sql = "SELECT id_empleado FROM EMPLEADO LIMIT 1";
 
-            try (PreparedStatement ps = conn.prepareStatement(sqlPedido, Statement.RETURN_GENERATED_KEYS)) {
-                ps.setDate(1, java.sql.Date.valueOf(pedido.getFechaCreacion()));
-                ps.setString(2, pedido.getEstado());
-                ps.setDouble(3, 0);
-                ps.setDouble(4, 0);
-                ps.setDouble(5, pedido.getTotal());
-                ps.setInt(6, 0);
+        try (Connection conn = conexionBD.crearConexion();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
-                ps.executeUpdate();
-
-                ResultSet rs = ps.getGeneratedKeys();
-                if (rs.next()) {
-                    int idGenerado = rs.getInt(1);
-                    pedido.setIdPedido(idGenerado);
-                } else {
-                    throw new PersistenciaException("No se pudo generar el ID del pedido");
-                }
+            if (rs.next()) {
+                return rs.getInt("id_empleado");
             }
 
-            try (PreparedStatement psExp = conn.prepareStatement(sqlExpress)) {
-                psExp.setInt(1, pedido.getIdPedido());
-                psExp.setInt(2, Integer.parseInt(pedido.getFolio())); // si folio es String, convertir
-                psExp.setString(3, pedido.getPinEncriptado());
-                psExp.setTimestamp(4, Timestamp.valueOf(pedido.getFechaListo()));
+            return 0;
 
-                psExp.executeUpdate();
-            }
-
-            conn.commit();
-            LOG.info("Pedido express insertado correctamente. ID: " + pedido.getIdPedido());
-
-        } catch (SQLException ex) {
-            LOG.log(Level.SEVERE, "Error al insertar pedido express", ex);
-            throw new PersistenciaException("Error al insertar pedido express", ex);
+        } catch (SQLException e) {
+            throw new PersistenciaException(
+                    "Error al obtener empleado disponible", e);
         }
     }
 
     @Override
-    public void actualizarEstado(int idPedido, String estado) throws PersistenciaException {
-        String sql = "UPDATE PEDIDO SET estado = ? WHERE id_pedido = ?";
+    public int obtenerSiguienteFolio() throws PersistenciaException {
+
+        String sql =
+                "SELECT IFNULL(MAX(folio),0)+1 AS siguiente FROM EXPRESS";
+
+        try (Connection conn = conexionBD.crearConexion();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) return rs.getInt("siguiente");
+            return 1;
+
+        } catch (SQLException e) {
+            throw new PersistenciaException(
+                    "Error al obtener folio", e);
+        }
+    }
+
+    @Override
+    public void insertar(PedidoExpressDTO pedido,
+                         int idEmpleado)
+            throws PersistenciaException {
+
+        String sqlPedido = """
+            INSERT INTO PEDIDO
+            (fecha_creacion, estado, subtotal, descuento, total, id_empleado)
+            VALUES (?, ?, ?, 0, ?, ?)
+        """;
+
+        String sqlExpress = """
+            INSERT INTO EXPRESS
+            (id_pedido, folio, pin_seguridad, fecha_listo)
+            VALUES (?, ?, SHA2(?,256), NULL)
+        """;
+
+        String sqlDetalle = """
+            INSERT INTO DETALLE_PEDIDO
+            (cantidad, nota, precio_unitario, id_pedido, id_producto)
+            VALUES (?, ?, ?, ?, ?)
+        """;
+
+        Connection conn = null;
+
+        try {
+
+            conn = conexionBD.crearConexion();
+            conn.setAutoCommit(false);
+
+            int idGenerado;
+
+            try (PreparedStatement ps =
+                    conn.prepareStatement(sqlPedido,
+                            Statement.RETURN_GENERATED_KEYS)) {
+
+                ps.setTimestamp(1,
+                        Timestamp.valueOf(pedido.getFechaCreacion()));
+                ps.setString(2, pedido.getEstado());
+                ps.setDouble(3, pedido.getSubtotal());
+                ps.setDouble(4, pedido.getTotal());
+                ps.setInt(5, idEmpleado);
+
+                ps.executeUpdate();
+
+                ResultSet rs = ps.getGeneratedKeys();
+                rs.next();
+                idGenerado = rs.getInt(1);
+            }
+
+            try (PreparedStatement psExp =
+                    conn.prepareStatement(sqlExpress)) {
+
+                psExp.setInt(1, idGenerado);
+                psExp.setInt(2, pedido.getFolio());
+                psExp.setString(3, pedido.getPin());
+                psExp.executeUpdate();
+            }
+
+            for (DetallePedidoDTO d : pedido.getDetalles()) {
+
+                try (PreparedStatement psDet =
+                        conn.prepareStatement(sqlDetalle)) {
+
+                    psDet.setInt(1, d.getCantidad());
+                    psDet.setString(2, d.getNota());
+                    psDet.setDouble(3, d.getPrecioUnitario());
+                    psDet.setInt(4, idGenerado);
+                    psDet.setInt(5, d.getIdProducto());
+                    psDet.executeUpdate();
+                }
+            }
+
+            conn.commit();
+
+        } catch (SQLException e) {
+
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { }
+            }
+
+            throw new PersistenciaException(
+                    "Error al insertar pedido express", e);
+
+        } finally {
+            if (conn != null) {
+                try { conn.close(); } catch (SQLException ex) { }
+            }
+        }
+    }
+
+    @Override
+    public void actualizarEstado(int idPedido,
+                                 String estado)
+            throws PersistenciaException {
+
+        String sql =
+                "UPDATE PEDIDO SET estado = ? WHERE id_pedido = ?";
 
         try (Connection conn = conexionBD.crearConexion();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, estado);
             ps.setInt(2, idPedido);
+            ps.executeUpdate();
 
-            if (ps.executeUpdate() == 0) {
-                throw new PersistenciaException("No se encontró el pedido para actualizar");
-            }
-
-            LOG.info("Estado del pedido express actualizado a: " + estado);
-
-        } catch (SQLException ex) {
-            LOG.log(Level.SEVERE, "Error al actualizar estado del pedido express", ex);
-            throw new PersistenciaException("Error al actualizar estado del pedido express", ex);
+        } catch (SQLException e) {
+            throw new PersistenciaException(
+                    "Error al actualizar estado", e);
         }
     }
 
     @Override
-    public PedidoExpress buscarPorId(int idPedido) throws PersistenciaException {
-        String sql = "SELECT p.id_pedido, p.fecha_creacion, p.estado, p.total, "
-                   + "e.folio, e.pin_seguridad, e.fecha_listo "
-                   + "FROM PEDIDO p "
-                   + "JOIN EXPRESS e ON p.id_pedido = e.id_pedido "
-                   + "WHERE p.id_pedido = ?";
+    public void actualizarFechaListo(int idPedido,
+                                     LocalDateTime fecha)
+            throws PersistenciaException {
 
-        try (Connection conn = conexionBD.crearConexion();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, idPedido);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    PedidoExpress p = new PedidoExpress();
-                    p.setIdPedido(rs.getInt("id_pedido"));
-                    p.setFechaCreacion(rs.getTimestamp("fecha_creacion").toLocalDateTime().toLocalDate());
-                    p.setEstado(rs.getString("estado"));
-                    p.setTotal(rs.getDouble("total"));
-                    p.setFolio(String.valueOf(rs.getInt("folio")));
-                    p.setPinEncriptado(rs.getString("pin_seguridad"));
-
-                    Timestamp ts = rs.getTimestamp("fecha_listo");
-                    if (ts != null) {
-                        p.setFechaListo(ts.toLocalDateTime());
-                    } else {
-                        p.setFechaListo(null);
-                    }
-
-                    return p;
-                } else {
-                    return null;
-                }
-            }
-
-        } catch (SQLException ex) {
-            LOG.log(Level.SEVERE, "Error al buscar pedido express por ID", ex);
-            throw new PersistenciaException("Error al buscar pedido express por ID", ex);
-        }
-    }
-
-    @Override
-    public List<PedidoExpressDTO> obtenerPendientes() throws PersistenciaException {
-        String sql = """
-            SELECT e.id_pedido, e.folio,
-                   p.subtotal, p.total, p.estado, p.fecha_creacion
-            FROM PEDIDO p
-            JOIN EXPRESS e ON p.id_pedido = e.id_pedido
-            LEFT JOIN PROGRAMADO pr ON e.id_pedido = pr.id_pedido
-            LEFT JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
-            LEFT JOIN TELEFONO t ON c.id_cliente = t.id_cliente
-            WHERE p.estado = 'Pendiente'
-        """;
-
-        List<PedidoExpressDTO> lista = new ArrayList<>();
-        try (Connection conn = conexionBD.crearConexion();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                PedidoExpressDTO dto = new PedidoExpressDTO();
-                dto.setIdPedido(rs.getInt("id_pedido"));
-                dto.setFolio(rs.getInt("folio"));
-                dto.setSubtotal(rs.getDouble("subtotal"));
-                dto.setTotal(rs.getDouble("total"));
-                dto.setEstado(rs.getString("estado"));
-                dto.setFechaCreacion(rs.getTimestamp("fecha_creacion").toLocalDateTime());
-                lista.add(dto);
-            }
-
-            return lista;
-
-        } catch (SQLException ex) {
-            throw new PersistenciaException("Error al obtener pedidos express pendientes", ex);
-        }
-    }
-
-    @Override
-    public void actualizarFechaListo(int idPedido, LocalDateTime fecha) throws PersistenciaException {
-        String sql = "UPDATE EXPRESS SET fecha_listo = ? WHERE id_pedido = ?";
+        String sql =
+                "UPDATE EXPRESS SET fecha_listo = ? WHERE id_pedido = ?";
 
         try (Connection conn = conexionBD.crearConexion();
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setTimestamp(1, Timestamp.valueOf(fecha));
             ps.setInt(2, idPedido);
+            ps.executeUpdate();
 
-            if (ps.executeUpdate() == 0) {
-                throw new PersistenciaException("No se encontró el pedido para actualizar fechaListo");
-            }
-
-            LOG.info("FechaListo del pedido express actualizada correctamente.");
-
-        } catch (SQLException ex) {
-            LOG.log(Level.SEVERE, "Error al actualizar fechaListo", ex);
-            throw new PersistenciaException("Error al actualizar fechaListo", ex);
+        } catch (SQLException e) {
+            throw new PersistenciaException(
+                    "Error al actualizar fechaListo", e);
         }
     }
-    
+
     @Override
-    public PedidoExpressDTO buscarPorIdDTO(int idPedido) throws PersistenciaException {
+    public PedidoExpressDTO buscarPorId(int idPedido)
+            throws PersistenciaException {
 
         String sql = """
-            SELECT 
-                pe.folio,
-                p.subtotal,
-                p.total,
-                p.estado,
-                p.fecha_creacion,
-                pe.pin_seguridad
+            SELECT p.id_pedido, p.subtotal, p.total,
+                   p.estado, p.fecha_creacion,
+                   e.folio, e.pin_seguridad,
+                   e.fecha_listo
             FROM PEDIDO p
-            JOIN EXPRESS pe ON p.id_pedido = pe.id_pedido
+            JOIN EXPRESS e ON p.id_pedido = e.id_pedido
             WHERE p.id_pedido = ?
         """;
 
@@ -226,79 +215,45 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
 
-                if (!rs.next()) {
-                    return null;
+                if (!rs.next()) return null;
+
+                PedidoExpressDTO dto =
+                        new PedidoExpressDTO();
+
+                dto.setIdPedido(rs.getInt("id_pedido"));
+                dto.setFolio(rs.getInt("folio"));
+                dto.setSubtotal(rs.getDouble("subtotal"));
+                dto.setTotal(rs.getDouble("total"));
+                dto.setEstado(rs.getString("estado"));
+                dto.setFechaCreacion(
+                        rs.getTimestamp("fecha_creacion")
+                                .toLocalDateTime());
+                dto.setPin(rs.getString("pin_seguridad"));
+
+                Timestamp ts = rs.getTimestamp("fecha_listo");
+                if (ts != null) {
+                    dto.setFechaListo(ts.toLocalDateTime());
                 }
 
-                int folio = rs.getInt("folio");
-                double subtotal = rs.getDouble("subtotal");
-                double total = rs.getDouble("total");
-                String estado = rs.getString("estado");
-                LocalDateTime fechaCreacion =
-                        rs.getTimestamp("fecha_creacion").toLocalDateTime();
-
-                List<DetallePedidoDTO> detalles = obtenerDetalles(conn, idPedido);
-
-                return new PedidoExpressDTO(
-                        idPedido,
-                        folio,
-                        subtotal,
-                        total,
-                        estado,
-                        fechaCreacion,
-                        detalles
-                );
+                return dto;
             }
 
-        } catch (SQLException ex) {
-            throw new PersistenciaException("Error al buscar PedidoExpressDTO", ex);
+        } catch (SQLException e) {
+            throw new PersistenciaException(
+                    "Error al buscar pedido", e);
         }
     }
 
-    private List<DetallePedidoDTO> obtenerDetalles(Connection conn, int idPedido) throws SQLException {
-
-        String sql = """
-            SELECT id_producto,
-                   cantidad,
-                   precio_unitario,
-                   nota
-            FROM DETALLE_PEDIDO
-            WHERE id_pedido = ?
-        """;
-
-        List<DetallePedidoDTO> lista = new ArrayList<>();
-
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, idPedido);
-
-            try (ResultSet rs = ps.executeQuery()) {
-
-                while (rs.next()) {
-
-                    DetallePedidoDTO detalle = new DetallePedidoDTO(
-                            rs.getInt("id_producto"),
-                            rs.getInt("cantidad"),
-                            rs.getDouble("precio_unitario"),
-                            rs.getString("nota")
-                    );
-
-                    lista.add(detalle);
-                }
-            }
-        }
-
-        return lista;
-    }
-    
     @Override
-    public boolean validarPin(int idPedido, String pinIngresado) throws PersistenciaException {
+    public boolean validarPin(int idPedido,
+                              String pinIngresado)
+            throws PersistenciaException {
 
         String sql = """
             SELECT 1
             FROM EXPRESS
             WHERE id_pedido = ?
-            AND pin_seguridad = SHA2(?, 256)
+            AND pin_seguridad = SHA2(?,256)
         """;
 
         try (Connection conn = conexionBD.crearConexion();
@@ -308,12 +263,58 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
             ps.setString(2, pinIngresado);
 
             try (ResultSet rs = ps.executeQuery()) {
-                return rs.next(); // true si el PIN coincide
+                return rs.next();
             }
 
-        } catch (SQLException ex) {
-            LOG.log(Level.SEVERE, "Error al validar PIN del pedido express", ex);
-            throw new PersistenciaException("Error al validar PIN del pedido express", ex);
+        } catch (SQLException e) {
+            throw new PersistenciaException(
+                    "Error al validar PIN", e);
         }
     }
+
+    @Override
+public List<PedidoExpressDTO> obtenerPendientes()
+        throws PersistenciaException {
+
+    String sql = """
+        SELECT p.id_pedido,
+               e.folio,
+               p.subtotal,
+               p.total,
+               p.estado,
+               p.fecha_creacion
+        FROM PEDIDO p
+        JOIN EXPRESS e ON p.id_pedido = e.id_pedido
+        WHERE p.estado = 'Pendiente'
+    """;
+
+    List<PedidoExpressDTO> lista = new ArrayList<>();
+
+    try (Connection conn = conexionBD.crearConexion();
+         PreparedStatement ps = conn.prepareStatement(sql);
+         ResultSet rs = ps.executeQuery()) {
+
+        while (rs.next()) {
+
+            PedidoExpressDTO dto = new PedidoExpressDTO();
+
+            dto.setIdPedido(rs.getInt("id_pedido"));
+            dto.setFolio(rs.getInt("folio"));
+            dto.setSubtotal(rs.getDouble("subtotal"));
+            dto.setTotal(rs.getDouble("total"));
+            dto.setEstado(rs.getString("estado"));
+            dto.setFechaCreacion(
+                    rs.getTimestamp("fecha_creacion")
+                      .toLocalDateTime());
+
+            lista.add(dto);
+        }
+
+        return lista;
+
+    } catch (SQLException e) {
+        throw new PersistenciaException(
+                "Error al obtener pedidos pendientes", e);
+    }
+}
 }

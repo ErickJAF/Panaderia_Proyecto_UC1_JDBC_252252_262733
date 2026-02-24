@@ -9,7 +9,7 @@ import java.util.List;
 
 /**
  *
- * @author ERICK
+ * @author Isaaa
  */
 public class PedidoExpressDTO {
     private int idPedido;
@@ -17,8 +17,10 @@ public class PedidoExpressDTO {
     private double subtotal;
     private double total;
     private String estado;
+    private String pin;
     private LocalDateTime fechaCreacion;
     private List<DetallePedidoDTO> detalles;
+    private LocalDateTime fechaListo;
 
     public PedidoExpressDTO() {}
 
@@ -27,16 +29,20 @@ public class PedidoExpressDTO {
                             double subtotal,
                             double total,
                             String estado,
+                            String pin,
                             LocalDateTime fechaCreacion,
-                            List<DetallePedidoDTO> detalles) {
+                            List<DetallePedidoDTO> detalles,
+                            LocalDateTime fechaListo) {
 
         this.idPedido = idPedido;
         this.folio = folio;
         this.subtotal = subtotal;
         this.total = total;
         this.estado = estado;
+        this.pin=pin;
         this.fechaCreacion = fechaCreacion;
         this.detalles = detalles;
+        this.fechaListo=fechaListo;
     }
 
     public int getIdPedido() {
@@ -79,6 +85,14 @@ public class PedidoExpressDTO {
         this.estado = estado;
     }
 
+    public String getPin() {
+        return pin;
+    }
+
+    public void setPin(String pin) {
+        this.pin = pin;
+    }
+
     public LocalDateTime getFechaCreacion() {
         return fechaCreacion;
     }
@@ -90,4 +104,16 @@ public class PedidoExpressDTO {
     public List<DetallePedidoDTO> getDetalles() {
         return detalles;
     }
+    public void setDetalles(List<DetallePedidoDTO> detalles) {
+    this.detalles = detalles;
+}
+
+    public LocalDateTime getFechaListo() {
+        return fechaListo;
+    }
+
+    public void setFechaListo(LocalDateTime fechaListo) {
+        this.fechaListo = fechaListo;
+    }
+    
 }

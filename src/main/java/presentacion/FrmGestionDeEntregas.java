@@ -300,8 +300,7 @@ public class FrmGestionDeEntregas extends JFrame {
 
             if (esExpress) {
                 lblTipoPedido.setText("Gestión Express");
-                PedidoExpressDTO pExp = pedidoExpressBO.buscarPorIdDTO(pedido.getIdPedido());
-                sb.append("   [SEGURIDAD]\n");
+PedidoExpressDTO pExp = pedidoExpressBO.buscarPorId(pedido.getIdPedido());                sb.append("   [SEGURIDAD]\n");
                 agregarTablaProductos(sb, pExp.getDetalles());
             } else {
                 lblTipoPedido.setText("Gestión Programada");
