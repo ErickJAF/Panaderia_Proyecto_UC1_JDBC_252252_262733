@@ -4,6 +4,7 @@
  */
 package persistencia.dominio;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -13,7 +14,7 @@ import java.time.LocalDate;
 public class Cupon {
     private int idCupon;
     private String codigo;
-    private float descuento;
+    private BigDecimal descuento;
     private int usosMaximos;
     private int usosActuales;
     private boolean activo;
@@ -23,7 +24,7 @@ public class Cupon {
     public Cupon() {
     }
 
-    public Cupon(int idCupon, String codigo, float descuento, int usosMaximos, int usosActuales, boolean activo, LocalDate fechaInicio, LocalDate fechaFin) {
+    public Cupon(int idCupon, String codigo, BigDecimal descuento, int usosMaximos, int usosActuales, boolean activo, LocalDate fechaInicio, LocalDate fechaFin) {
         this.idCupon = idCupon;
         this.codigo = codigo;
         this.descuento = descuento;
@@ -42,7 +43,7 @@ public class Cupon {
         this.codigo = codigo;
     }
 
-    public void setDescuento(float descuento) {
+    public void setDescuento(BigDecimal descuento) {
         this.descuento = descuento;
     }
 
@@ -74,7 +75,7 @@ public class Cupon {
         return codigo;
     }
 
-    public float getDescuento() {
+    public BigDecimal getDescuento() {
         return descuento;
     }
 
