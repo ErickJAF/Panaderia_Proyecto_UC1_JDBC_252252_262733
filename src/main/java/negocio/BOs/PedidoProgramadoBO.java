@@ -67,7 +67,7 @@ public void registrarPedido(PedidoProgramadoDTO dto)
     descuentoCalculado = subtotalCalculado *
             cuponValido.getDescuento().doubleValue();
 
-    idCuponAplicado = cuponValido.getIdCupon();
+    idCuponAplicado = cuponValido.getIdCupon().intValue();
     }
 
     if (Math.abs(subtotalCalculado - dto.getSubtotal()) > 0.01) {
