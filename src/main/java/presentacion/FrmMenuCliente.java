@@ -63,7 +63,7 @@ public class FrmMenuCliente extends JFrame {
 
         add(panel, BorderLayout.CENTER);
 
-        // 🔹 Evento correcto
+   
         btnCrearPedido.addActionListener(e -> {
             try {
                 new FrmCrearPedidoProgramado(
@@ -81,6 +81,10 @@ public class FrmMenuCliente extends JFrame {
                         JOptionPane.ERROR_MESSAGE);
             }
         });
+        btnHistorial.addActionListener(e ->
+        new FrmHistorialCliente(pedidoProgramadoBO)
+                .setVisible(true)
+);
 
         btnCerrarSesion.addActionListener(e -> cerrarSesion());
     }

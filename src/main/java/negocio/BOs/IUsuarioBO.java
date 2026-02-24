@@ -15,4 +15,10 @@ import negocio.excepciones.NegocioException;
 public interface IUsuarioBO {
        UsuarioDTO autenticar(String nombreUsuario, String contrasena)
             throws NegocioException;
+       void editarPerfil(int idUsuario,
+                  String nombre,
+                  String telefono,
+                  String correo,
+                  String password)
+        throws NegocioException;
 }

@@ -19,4 +19,10 @@ public interface IUsuarioDAO {
             throws PersistenciaException;
     int insertar(String nombreUsuario, String rol, String contrasena)
         throws PersistenciaException;
+    void actualizarPerfil(int idUsuario,
+                      String nombre,
+                      String telefono,
+                      String correo,
+                      String password)
+        throws PersistenciaException;
 }

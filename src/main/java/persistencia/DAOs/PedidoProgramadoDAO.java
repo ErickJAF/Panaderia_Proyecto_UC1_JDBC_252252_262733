@@ -302,4 +302,53 @@ public class PedidoProgramadoDAO implements IPedidoProgramadoDAO {
 
         return lista;
     }
+   @Override
+public List<PedidoProgramadoDTO> obtenerPorCliente(int idCliente)
+        throws PersistenciaException {
+
+    String sql = """
+        SELECT p.id_pedido,
+               p.fecha_creacion,
+               p.estado,
+               p.subtotal,
+               p.descuento,
+               p.total
+        FROM PEDIDO p
+        JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
+        WHERE pr.id_cliente = ?
+        ORDER BY p.fecha_creacion DESC
+    """;
+
+    List<PedidoProgramadoDTO> lista = new ArrayList<>();
+
+    try (Connection conn = conexionBD.crearConexion();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setInt(1, idCliente);
+
+        try (ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+
+                PedidoProgramadoDTO dto = new PedidoProgramadoDTO();
+
+                dto.setIdPedido(rs.getInt("id_pedido"));
+                dto.setFechaCreacion(
+                        rs.getDate("fecha_creacion").toLocalDate()
+                );
+                dto.setEstado(rs.getString("estado"));
+                dto.setSubtotal(rs.getDouble("subtotal"));
+                dto.setDescuento(rs.getDouble("descuento"));
+                dto.setTotal(rs.getDouble("total"));
+
+                lista.add(dto);
+            }
+        }
+
+        return lista;
+
+    } catch (SQLException e) {
+        throw new PersistenciaException("Error al obtener historial", e);
+    }
+}
 }

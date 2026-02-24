@@ -6,6 +6,7 @@ package negocio.BOs;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.logging.Logger;
 import negocio.DTOs.PedidoProgramadoDTO;
 import negocio.excepciones.NegocioException;
@@ -261,4 +262,18 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
             throw new NegocioException("Error al consultar el cupón", ex);
         }
     }
+    @Override
+public List<PedidoProgramadoDTO> obtenerHistorialCliente(int idCliente)
+        throws NegocioException {
+
+    if (idCliente <= 0) {
+        throw new NegocioException("Cliente inválido");
+    }
+
+    try {
+        return pedidoDAO.obtenerPorCliente(idCliente);
+    } catch (PersistenciaException e) {
+        throw new NegocioException("No se pudo obtener el historial", e);
+    }
+}
 }

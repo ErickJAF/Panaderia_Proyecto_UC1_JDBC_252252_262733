@@ -4,6 +4,7 @@
  */
 package negocio.BOs;
 
+import java.util.List;
 import negocio.DTOs.PedidoProgramadoDTO;
 import negocio.excepciones.NegocioException;
 import persistencia.dominio.PedidoProgramado;
@@ -20,4 +21,6 @@ public interface IPedidoProgramadoBO {
     PedidoProgramado buscarPorId(int idPedido) throws NegocioException;
     PedidoProgramadoDTO buscarPorIdDTO(int idPedido) throws NegocioException;
     double calcularDescuento(String codigoCupon, double subtotal) throws NegocioException;
+    List<PedidoProgramadoDTO> obtenerHistorialCliente(int idCliente)
+        throws NegocioException;
 }

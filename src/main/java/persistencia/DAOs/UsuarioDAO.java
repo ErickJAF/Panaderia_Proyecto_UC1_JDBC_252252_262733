@@ -84,5 +84,38 @@ public int insertar(String nombreUsuario, String rol, String contrasena)
     } catch (SQLException e) {
         throw new PersistenciaException("Error al insertar usuario", e);
     }
+    
+}
+@Override
+public void actualizarPerfil(int idUsuario,
+                             String nombre,
+                             String telefono,
+                             String correo,
+                             String password)
+        throws PersistenciaException {
+
+    String sql = """
+        UPDATE USUARIO
+        SET nombre_usuario = ?,
+            telefono = ?,
+            correo = ?,
+            password = ?
+        WHERE id_usuario = ?
+    """;
+
+    try (Connection conn = conexionBD.crearConexion();
+         PreparedStatement ps = conn.prepareStatement(sql)) {
+
+        ps.setString(1, nombre);
+        ps.setString(2, telefono);
+        ps.setString(3, correo);
+        ps.setString(4, password);
+        ps.setInt(5, idUsuario);
+
+        ps.executeUpdate();
+
+    } catch (SQLException e) {
+        throw new PersistenciaException("Error al actualizar perfil", e);
+    }
 }
 }

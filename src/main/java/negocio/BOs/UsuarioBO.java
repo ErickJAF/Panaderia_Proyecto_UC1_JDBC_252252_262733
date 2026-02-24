@@ -49,4 +49,28 @@ public class UsuarioBO implements IUsuarioBO {
     throw new NegocioException("Error al iniciar sesión: " + e.getMessage());
 }
     }
+    @Override
+public void editarPerfil(int idUsuario,
+                         String nombre,
+                         String telefono,
+                         String correo,
+                         String password)
+        throws NegocioException {
+
+    if (nombre == null || nombre.isBlank()) {
+        throw new NegocioException("El nombre no puede estar vacío");
+    }
+
+    try {
+        usuarioDAO.actualizarPerfil(
+                idUsuario,
+                nombre,
+                telefono,
+                correo,
+                password
+        );
+    } catch (PersistenciaException e) {
+        throw new NegocioException("No se pudo actualizar el perfil", e);
+    }
+}
 }
