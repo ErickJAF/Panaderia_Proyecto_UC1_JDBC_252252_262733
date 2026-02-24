@@ -302,7 +302,6 @@ public class FrmGestionDeEntregas extends JFrame {
                 lblTipoPedido.setText("Gestión Express");
                 PedidoExpressDTO pExp = pedidoExpressBO.buscarPorIdDTO(pedido.getIdPedido());
                 sb.append("   [SEGURIDAD]\n");
-                sb.append("   • PIN:       ").append(pExp.getPinEncriptado()).append("\n\n");
                 agregarTablaProductos(sb, pExp.getDetalles());
             } else {
                 lblTipoPedido.setText("Gestión Programada");
@@ -336,25 +335,64 @@ public class FrmGestionDeEntregas extends JFrame {
     }
 
     private void cambiarEstadoPedido() {
+
         PedidoEntregaDTO pedido = listaPedidos.getSelectedValue();
+
         if (pedido == null) {
             JOptionPane.showMessageDialog(this, "Seleccione un pedido primero.");
             return;
         }
 
-        String nuevoEstado = (String) JOptionPane.showInputDialog(this, "Actualizar estado a:", "Estado",
-                             JOptionPane.QUESTION_MESSAGE, null,
-                             new String[]{"Pendiente", "Listo", "Entregado", "Cancelado", "No Entregado"},
-                             pedido.getEstado());
+        String nuevoEstado = (String) JOptionPane.showInputDialog(
+                this,
+                "Actualizar estado a:",
+                "Estado",
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                new String[]{"Pendiente", "Listo", "Entregado", "Cancelado", "No Entregado"},
+                pedido.getEstado()
+        );
 
-        if (nuevoEstado != null && !nuevoEstado.equals(pedido.getEstado())) {
-            try {
-                if (pedido.getNombreCliente() == null) pedidoExpressBO.actualizarEstado(pedido.getIdPedido(), nuevoEstado);
-                else pedidoProgramadoBO.actualizarEstado(pedido.getIdPedido(), nuevoEstado);
+        if (nuevoEstado == null || nuevoEstado.equals(pedido.getEstado())) {
+            return;
+        }
 
-                JOptionPane.showMessageDialog(this, "¡Estado actualizado!");
-                cargarPedidosPorEstado((String) comboEstado.getSelectedItem());
-            } catch (HeadlessException | NegocioException ex) { mostrarError("No se pudo actualizar", ex); }
+        try {
+
+            if ("Entregado".equalsIgnoreCase(nuevoEstado)) {
+
+                String metodoPago = (String) JOptionPane.showInputDialog(
+                        this,
+                        "Seleccione el método de pago:",
+                        "Generar Pago",
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        new String[]{"Efectivo", "Tarjeta"},
+                        "Efectivo"
+                );
+
+                if (metodoPago == null) {
+                    return;
+                }
+
+                pedidoBO.generarPago(
+                        pedido.getTotal(),
+                        metodoPago,
+                        pedido.getIdPedido()
+                );
+            }
+
+            if (pedido.getNombreCliente() == null) {
+                pedidoExpressBO.actualizarEstado(pedido.getIdPedido(), nuevoEstado);
+            } else {
+                pedidoProgramadoBO.actualizarEstado(pedido.getIdPedido(), nuevoEstado);
+            }
+
+            JOptionPane.showMessageDialog(this, "¡Estado actualizado correctamente!");
+            cargarPedidosPorEstado((String) comboEstado.getSelectedItem());
+
+        } catch (NegocioException ex) {
+            mostrarError("No se pudo actualizar", ex);
         }
     }
 

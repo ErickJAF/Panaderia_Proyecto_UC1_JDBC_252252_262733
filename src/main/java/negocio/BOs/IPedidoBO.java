@@ -24,5 +24,5 @@ public interface IPedidoBO {
     
     List<PedidoEntregaDTO> buscarPorFolio(int folio) throws NegocioException;
     
-    public void generarPago(double monto, String metodoPago, int idPedido) throws NegocioException;
+    void generarPago(double monto, String metodoPago, int idPedido) throws NegocioException;
 }

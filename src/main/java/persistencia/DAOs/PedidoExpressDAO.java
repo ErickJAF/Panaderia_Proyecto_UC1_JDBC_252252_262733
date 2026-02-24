@@ -148,7 +148,7 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
     @Override
     public List<PedidoExpressDTO> obtenerPendientes() throws PersistenciaException {
         String sql = """
-            SELECT e.id_pedido, e.folio, e.pin_seguridad,
+            SELECT e.id_pedido, e.folio,
                    p.subtotal, p.total, p.estado, p.fecha_creacion
             FROM PEDIDO p
             JOIN EXPRESS e ON p.id_pedido = e.id_pedido
@@ -167,7 +167,6 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
                 PedidoExpressDTO dto = new PedidoExpressDTO();
                 dto.setIdPedido(rs.getInt("id_pedido"));
                 dto.setFolio(rs.getInt("folio"));
-                dto.setPinEncriptado(rs.getString("pin_seguridad"));
                 dto.setSubtotal(rs.getDouble("subtotal"));
                 dto.setTotal(rs.getDouble("total"));
                 dto.setEstado(rs.getString("estado"));
@@ -213,8 +212,7 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
                 p.subtotal,
                 p.total,
                 p.estado,
-                p.fecha_creacion,
-                pe.pin_seguridad
+                p.fecha_creacion
             FROM PEDIDO p
             JOIN EXPRESS pe ON p.id_pedido = pe.id_pedido
             WHERE p.id_pedido = ?
@@ -232,7 +230,6 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
                 }
 
                 int folio = rs.getInt("folio");
-                String pin = rs.getString("pin_seguridad");
                 double subtotal = rs.getDouble("subtotal");
                 double total = rs.getDouble("total");
                 String estado = rs.getString("estado");
@@ -244,7 +241,6 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
                 return new PedidoExpressDTO(
                         idPedido,
                         folio,
-                        pin,
                         subtotal,
                         total,
                         estado,

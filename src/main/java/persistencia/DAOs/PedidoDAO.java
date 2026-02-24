@@ -261,4 +261,43 @@ public class PedidoDAO implements IPedidoDAO{
             throw new PersistenciaException("Error al generar el pago", e);
         }
     }
+    
+    @Override
+    public PedidoEntregaDTO buscarPorId(int idPedido) throws PersistenciaException {
+
+        String sql = """
+            SELECT p.id_pedido,
+                    p.estado,
+                    p.total,
+                    c.nombre_completo
+             FROM PEDIDO p
+             LEFT JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
+             LEFT JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
+             WHERE p.id_pedido = ?
+        """;
+
+        try (Connection con = conexionBD.crearConexion();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setInt(1, idPedido);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                if (rs.next()) {
+                    PedidoEntregaDTO pedido = new PedidoEntregaDTO();
+                    pedido.setIdPedido(rs.getInt("id_pedido"));
+                    pedido.setEstado(rs.getString("estado"));
+                    pedido.setTotal(rs.getDouble("total"));
+                    pedido.setNombreCliente(rs.getString("nombre_completo"));
+
+                    return pedido;
+                }
+            }
+
+            return null;
+
+        } catch (SQLException e) {
+            throw new PersistenciaException("Error al buscar pedido por ID", e);
+        }
+    }
 }

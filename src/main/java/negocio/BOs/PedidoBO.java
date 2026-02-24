@@ -97,10 +97,26 @@ public class PedidoBO implements IPedidoBO{
 
     @Override
     public void generarPago(double monto, String metodoPago, int idPedido) throws NegocioException {
+
         try {
+            PedidoEntregaDTO pedido = pedidoDAO.buscarPorId(idPedido);
+
+            if (pedido == null) {
+                throw new NegocioException("El pedido no existe.");
+            }
+
+            if (!"Listo".equalsIgnoreCase(pedido.getEstado())) {
+                throw new NegocioException(
+                    "Solo se puede generar el pago cuando el pedido está en estado 'Listo'."
+                );
+            }
+
             pedidoDAO.generarPago(monto, metodoPago, idPedido);
+
         } catch (PersistenciaException e) {
-            throw new NegocioException("No se pudo generar el pago para el pedido " + idPedido, e);
+            throw new NegocioException(
+                "No se pudo generar el pago para el pedido " + idPedido, e
+            );
         }
     }
 }

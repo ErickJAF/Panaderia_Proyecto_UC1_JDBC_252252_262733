@@ -171,11 +171,6 @@ VALUES
 (2, '', 30.00, 1, 9),
 (1, '', 27.00, 1, 10);
 
-INSERT INTO PAGO (fecha_pago, monto, metodo_pago, id_pedido)
-VALUES
-(CURDATE(), 165.00, 'Tarjeta', 1),
-(CURDATE(), 95.00, 'Efectivo', 2);
-
 INSERT INTO PEDIDO (fecha_creacion, estado, subtotal, descuento, total, id_empleado)
 VALUES
 (CURDATE(), 'Pendiente', 120.00, 10.00, 110.00, 1),
@@ -194,6 +189,10 @@ VALUES
 
 INSERT INTO DETALLE_PEDIDO (cantidad, nota, precio_unitario, id_pedido, id_producto)
 VALUES
+(2, 'Sin corteza', 40.00, 2, 1),
+(1, '', 25.00, 2, 2),
+(1, 'Extra mantequilla', 30.00, 3, 3),
+(2, '', 20.00, 3, 5),
 (2, '', 40.00, 7, 1),
 (1, '', 25.00, 7, 2),
 (1, 'Extra mantequilla', 30.00, 8, 3),
@@ -204,14 +203,6 @@ VALUES
 (1, '', 27.00, 10, 10),
 (3, 'Sin azúcar', 35.00, 11, 4),
 (2, '', 32.00, 11, 8);
-
-INSERT INTO PAGO (fecha_pago, monto, metodo_pago, id_pedido)
-VALUES
-(CURDATE(), 110.00, 'Efectivo', 7),
-(CURDATE(), 80.00, 'Tarjeta', 8),
-(CURDATE(), 135.00, 'Tarjeta', 9),
-(CURDATE(), 60.00, 'Efectivo', 10),
-(CURDATE(), 180.00, 'Tarjeta', 11);
 
 -- CONSULTAS DE PRUEBA
 
@@ -343,3 +334,17 @@ SET estado = 'Entregado'
 WHERE id_pedido = 1;
 
 SELECT * FROM HISTORIAL_ESTADO;
+
+UPDATE PEDIDO
+SET estado = 'Entregado'
+WHERE id_pedido = 2;
+
+SELECT h.id_historial, h.id_pedido, h.estado_anterior, 
+       h.estado_nuevo, h.fecha_cambio, p.total
+FROM HISTORIAL_ESTADO h
+JOIN PEDIDO p ON h.id_pedido = p.id_pedido
+JOIN EXPRESS e ON p.id_pedido = e.id_pedido
+WHERE e.folio = 2
+ORDER BY h.fecha_cambio ASC;
+
+SELECT * FROM PAGO;

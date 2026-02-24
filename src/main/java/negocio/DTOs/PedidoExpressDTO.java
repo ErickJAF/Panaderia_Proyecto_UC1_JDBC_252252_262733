@@ -14,7 +14,6 @@ import java.util.List;
 public class PedidoExpressDTO {
     private int idPedido;
     private int folio;
-    private String pinEncriptado;
     private double subtotal;
     private double total;
     private String estado;
@@ -25,7 +24,6 @@ public class PedidoExpressDTO {
 
     public PedidoExpressDTO(int idPedido,
                             int folio,
-                            String pinEncriptado,
                             double subtotal,
                             double total,
                             String estado,
@@ -34,7 +32,6 @@ public class PedidoExpressDTO {
 
         this.idPedido = idPedido;
         this.folio = folio;
-        this.pinEncriptado = pinEncriptado;
         this.subtotal = subtotal;
         this.total = total;
         this.estado = estado;
@@ -56,14 +53,6 @@ public class PedidoExpressDTO {
 
     public void setFolio(int folio) {
         this.folio = folio;
-    }
-
-    public String getPinEncriptado() {
-        return pinEncriptado;
-    }
-
-    public void setPinEncriptado(String pinEncriptado) {
-        this.pinEncriptado = pinEncriptado;
     }
 
     public double getSubtotal() {
