@@ -4,122 +4,150 @@
  */
 package negocio.BOs;
 
-import negocio.DTOs.PedidoProgramadoDTO;
-import persistencia.DAOs.IPedidoProgramadoDAO;
-import persistencia.dominio.PedidoProgramado;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.logging.Logger;
+import negocio.DTOs.PedidoProgramadoDTO;
 import negocio.excepciones.NegocioException;
 import persistencia.DAOs.ICuponDAO;
 import persistencia.DAOs.IDetallePedidoDAO;
+import persistencia.DAOs.IPedidoProgramadoDAO;
 import persistencia.dominio.Cupon;
+import persistencia.dominio.PedidoProgramado;
 import persistencia.excepciones.PersistenciaException;
 
-/**
- *
- * @author icoro
- */
-public class PedidoProgramadoBO implements IPedidoProgramadoBO{
-    
+public class PedidoProgramadoBO implements IPedidoProgramadoBO {
+
     private final IDetallePedidoDAO detalleDAO;
     private final IPedidoProgramadoDAO pedidoDAO;
-    private ICuponDAO cuponDAO;
-    private CuponBO cuponBO;
+    private final ICuponDAO cuponDAO;
+    private final CuponBO cuponBO;
 
     private static final Logger LOG = Logger.getLogger(PedidoProgramadoBO.class.getName());
 
     public PedidoProgramadoBO(IPedidoProgramadoDAO pedidoDAO,
-                          IDetallePedidoDAO detalleDAO,
-                          ICuponDAO cuponDAO) {
+                              IDetallePedidoDAO detalleDAO,
+                              ICuponDAO cuponDAO) {
 
-    this.pedidoDAO = pedidoDAO;
-    this.detalleDAO = detalleDAO;
-    this.cuponDAO = cuponDAO;
-    this.cuponBO = new CuponBO(cuponDAO);
-}
-
-@Override
-public void registrarPedido(PedidoProgramadoDTO dto)
-        throws NegocioException {
-
-    if (dto.getDetalles() == null || dto.getDetalles().isEmpty()) {
-        throw new NegocioException("El pedido debe contener al menos un producto.");
+        this.pedidoDAO = pedidoDAO;
+        this.detalleDAO = detalleDAO;
+        this.cuponDAO = cuponDAO;
+        this.cuponBO = new CuponBO(cuponDAO);
     }
 
-    double subtotalCalculado = 0;
+    @Override
+    public void registrarPedido(PedidoProgramadoDTO dto) throws NegocioException {
 
-    for (var d : dto.getDetalles()) {
-
-        if (d.getCantidad() <= 0) {
-            throw new NegocioException("Cantidad inválida en un producto.");
+        if (dto == null) {
+            throw new NegocioException("El pedido no puede ser nulo.");
         }
 
-        subtotalCalculado += d.getCantidad() * d.getPrecioUnitario();
-    }
-    
-    double descuentoCalculado = 0;
-    Integer idCuponAplicado = null;
+        if (dto.getDetalles() == null || dto.getDetalles().isEmpty()) {
+            throw new NegocioException("El pedido debe contener al menos un producto.");
+        }
 
-    if (dto.getIdCupon() != null) {
-
-    Cupon cuponValido = cuponBO.validarCuponPorId(dto.getIdCupon());
-
-    descuentoCalculado = subtotalCalculado *
-            cuponValido.getDescuento().doubleValue();
-
-    idCuponAplicado = cuponValido.getIdCupon().intValue();
-    }
-
-    if (Math.abs(subtotalCalculado - dto.getSubtotal()) > 0.01) {
-        throw new NegocioException("El subtotal no coincide con el cálculo interno.");
-    }
-
-   if (Math.abs(descuentoCalculado - dto.getDescuento()) > 0.01) {
-    throw new NegocioException("El descuento no coincide con el cálculo interno.");
-}
-
-double totalCalculado = subtotalCalculado - descuentoCalculado;
-
-    if (Math.abs(totalCalculado - dto.getTotal()) > 0.01) {
-        throw new NegocioException("El total no coincide con el cálculo interno.");
-    }
-
-    PedidoProgramado pedido = new PedidoProgramado();
-    pedido.setFechaCreacion(LocalDate.now());
-    pedido.setEstado("Pendiente");
-    pedido.setSubtotal(dto.getSubtotal());
-    pedido.setDescuento((float) dto.getDescuento());
-    pedido.setTotal(dto.getTotal());
-    pedido.setIdEmpleado(dto.getIdEmpleado());
-    pedido.setIdCliente(dto.getIdCliente());
-    pedido.setIdCupon(idCuponAplicado);
-
-    try {
-
-        pedidoDAO.insertar(pedido);
-
-        int idPedido = pedido.getIdPedido();
+        double subtotalCalculado = 0;
 
         for (var d : dto.getDetalles()) {
-            detalleDAO.insertar(idPedido, d);
-        }
-        if (idCuponAplicado != null) {
-        cuponBO.aplicarUso(Long.valueOf(idCuponAplicado));
+
+            if (d.getCantidad() <= 0) {
+                throw new NegocioException("Cantidad inválida en un producto.");
+            }
+
+            subtotalCalculado += d.getCantidad() * d.getPrecioUnitario();
         }
 
-    } catch (PersistenciaException e) {
-        throw new NegocioException("No se pudo crear el pedido.", e);
+        double descuentoCalculado = 0;
+        Integer idCupon = null;
+
+        try {
+
+            // ================= CUPÓN =================
+            if (dto.getCodigoCupon() != null && !dto.getCodigoCupon().isBlank()) {
+
+                Cupon cupon = cuponDAO.buscarPorCodigo(dto.getCodigoCupon());
+
+                if (cupon == null) {
+                    throw new NegocioException("Cupón inválido");
+                }
+
+                if (!cupon.isActivo()) {
+                    throw new NegocioException("El cupón no está activo");
+                }
+
+                if (cupon.getFechaFin().isBefore(LocalDate.now())) {
+                    throw new NegocioException("El cupón está expirado");
+                }
+
+                idCupon = cupon.getIdCupon();
+
+                BigDecimal porcentaje = cupon.getDescuento();
+                BigDecimal subtotalBD = BigDecimal.valueOf(subtotalCalculado);
+
+                BigDecimal descuentoBD = subtotalBD
+                        .multiply(porcentaje)
+                        .divide(BigDecimal.valueOf(100));
+
+                descuentoCalculado = descuentoBD.doubleValue();
+            }
+
+            // ================= VALIDACIONES =================
+
+            if (Math.abs(subtotalCalculado - dto.getSubtotal()) > 0.01) {
+                throw new NegocioException("El subtotal no coincide con el cálculo interno.");
+            }
+
+            if (Math.abs(descuentoCalculado - dto.getDescuento()) > 0.01) {
+                throw new NegocioException("El descuento no coincide con el cálculo interno.");
+            }
+
+            double totalCalculado = subtotalCalculado - descuentoCalculado;
+
+            if (Math.abs(totalCalculado - dto.getTotal()) > 0.01) {
+                throw new NegocioException("El total no coincide con el cálculo interno.");
+            }
+
+            // ================= CREACIÓN DEL PEDIDO =================
+
+            PedidoProgramado pedido = new PedidoProgramado();
+            pedido.setFechaCreacion(LocalDate.now());
+            pedido.setEstado("Pendiente");
+            pedido.setSubtotal(subtotalCalculado);
+            pedido.setDescuento((float) descuentoCalculado);
+            pedido.setTotal(totalCalculado);
+            pedido.setIdEmpleado(dto.getIdEmpleado());
+            pedido.setIdCliente(dto.getIdCliente());
+            pedido.setIdCupon(idCupon);
+
+            pedidoDAO.insertar(pedido);
+
+            int idPedido = pedido.getIdPedido();
+
+            for (var d : dto.getDetalles()) {
+                detalleDAO.insertar(idPedido, d);
+            }
+
+            if (idCupon != null) {
+                cuponBO.aplicarUso(Long.valueOf(idCupon));
+            }
+
+        } catch (PersistenciaException e) {
+            LOG.severe("Error al registrar pedido: " + e.getMessage());
+            throw new NegocioException("No se pudo crear el pedido.", e);
+        }
     }
-}
 
     @Override
     public void actualizarEstado(int idPedido, String nuevoEstado) throws NegocioException {
+
         if (nuevoEstado == null || nuevoEstado.isBlank()) {
             throw new NegocioException("El estado no puede ser vacío");
         }
 
         try {
+
             PedidoProgramado pedido = pedidoDAO.buscarPorId(idPedido);
+
             if (pedido == null) {
                 throw new NegocioException("No se encontró el pedido con ID " + idPedido);
             }
@@ -127,28 +155,25 @@ double totalCalculado = subtotalCalculado - descuentoCalculado;
             String estadoActual = pedido.getEstado();
 
             switch (nuevoEstado) {
+
                 case "Listo":
-                    if (!estadoActual.equals("Pendiente")) {
-                        throw new NegocioException("Solo los pedidos Pendientes pueden marcarse como Listo");
-                    }
+                    if (!estadoActual.equals("Pendiente"))
+                        throw new NegocioException("Solo pedidos Pendientes pueden marcarse como Listo");
                     break;
 
                 case "Entregado":
-                    if (!estadoActual.equals("Listo")) {
-                        throw new NegocioException("Solo los pedidos Listos pueden entregarse");
-                    }
+                    if (!estadoActual.equals("Listo"))
+                        throw new NegocioException("Solo pedidos Listos pueden entregarse");
                     break;
 
                 case "Cancelado":
-                    if (estadoActual.equals("Entregado")) {
-                        throw new NegocioException("No se puede cancelar un pedido ya entregado");
-                    }
+                    if (estadoActual.equals("Entregado"))
+                        throw new NegocioException("No se puede cancelar un pedido entregado");
                     break;
 
                 case "No Entregado":
-                    if (!estadoActual.equals("Listo")) {
-                        throw new NegocioException("Solo los pedidos Listos pueden pasar a No Entregado");
-                    }
+                    if (!estadoActual.equals("Listo"))
+                        throw new NegocioException("Solo pedidos Listos pueden pasar a No Entregado");
                     break;
 
                 default:
@@ -156,22 +181,26 @@ double totalCalculado = subtotalCalculado - descuentoCalculado;
             }
 
             pedidoDAO.actualizarEstado(idPedido, nuevoEstado);
-            LOG.info("Estado actualizado correctamente. ID: " + idPedido + ", Estado final: " + nuevoEstado);
+            LOG.info("Estado actualizado correctamente. ID: " + idPedido);
 
         } catch (PersistenciaException ex) {
-            LOG.severe("Error al actualizar el estado del pedido programado. ID: " + idPedido + ", Error: " + ex.getMessage());
-            throw new NegocioException("Error al actualizar el estado del pedido programado", ex);
+            throw new NegocioException("Error al actualizar el estado del pedido", ex);
         }
     }
 
     @Override
     public PedidoProgramado buscarPorId(int idPedido) throws NegocioException {
+
         try {
+
             PedidoProgramado pedido = pedidoDAO.buscarPorId(idPedido);
+
             if (pedido == null) {
                 throw new NegocioException("No se encontró el pedido con ID " + idPedido);
             }
+
             return pedido;
+
         } catch (PersistenciaException ex) {
             throw new NegocioException("Error al buscar el pedido por ID", ex);
         }
@@ -196,6 +225,40 @@ double totalCalculado = subtotalCalculado - descuentoCalculado;
 
         } catch (PersistenciaException ex) {
             throw new NegocioException("Error al buscar el pedido programado", ex);
+        }
+    }
+
+    @Override
+    public double calcularDescuento(String codigoCupon, double subtotal) throws NegocioException {
+
+        if (codigoCupon == null || codigoCupon.isBlank()) {
+            return 0;
+        }
+
+        try {
+
+            Cupon cupon = cuponDAO.buscarPorCodigo(codigoCupon);
+
+            if (cupon == null)
+                throw new NegocioException("El cupón no existe");
+
+            if (!cupon.isActivo())
+                throw new NegocioException("El cupón no está activo");
+
+            if (cupon.getFechaFin().isBefore(LocalDate.now()))
+                throw new NegocioException("El cupón está expirado");
+
+            BigDecimal porcentaje = cupon.getDescuento();
+            BigDecimal subtotalBD = BigDecimal.valueOf(subtotal);
+
+            BigDecimal descuentoBD = subtotalBD
+                    .multiply(porcentaje)
+                    .divide(BigDecimal.valueOf(100));
+
+            return descuentoBD.doubleValue();
+
+        } catch (PersistenciaException ex) {
+            throw new NegocioException("Error al consultar el cupón", ex);
         }
     }
 }

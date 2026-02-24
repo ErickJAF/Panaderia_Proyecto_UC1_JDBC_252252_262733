@@ -56,6 +56,7 @@ public class FrmGestionDeEntregas extends JFrame {
 
     pedidoBO = new PedidoBO(new PedidoDAO(conexionBD));
     pedidoExpressBO = new PedidoExpressBO(new PedidoExpressDAO(conexionBD));
+    ICuponDAO cuponDAO = new CuponDAO(new ConexionBD());
 
     IPedidoProgramadoDAO pedidoProgramadoDAO =
             new PedidoProgramadoDAO(conexionBD);
@@ -64,7 +65,7 @@ public class FrmGestionDeEntregas extends JFrame {
             new DetallePedidoDAO(conexionBD);
 
     pedidoProgramadoBO =
-            new PedidoProgramadoBO(pedidoProgramadoDAO, detallePedidoDAO);
+            new PedidoProgramadoBO(pedidoProgramadoDAO, detallePedidoDAO, cuponDAO);
 
     new HistorialEstadoBO(new HistorialEstadoDAO(conexionBD));
 }

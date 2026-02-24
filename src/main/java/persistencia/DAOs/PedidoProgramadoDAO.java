@@ -26,12 +26,16 @@ import negocio.DTOs.PedidoProgramadoDTO;
  */
 public class PedidoProgramadoDAO implements IPedidoProgramadoDAO {
     private final IConexionBD conexionBD;
+    private Integer idCupon;
+    private String codigoCupon;
     private static final Logger LOG =
             Logger.getLogger(PedidoProgramadoDAO.class.getName());
 
     public PedidoProgramadoDAO(IConexionBD conexionBD) {
         this.conexionBD = conexionBD;
     }
+    
+    
 
     @Override
     public List<PedidoProgramado> obtenerActivosPorCliente(int idCliente)

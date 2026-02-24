@@ -60,6 +60,7 @@ public class FrmCrearPedidoProgramado extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
+        getContentPane().setBackground(new Color(240, 240, 240));
 
         panelProductos = new JPanel();
         panelProductos.setLayout(new BoxLayout(panelProductos, BoxLayout.Y_AXIS));
@@ -134,6 +135,8 @@ public class FrmCrearPedidoProgramado extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = 6;
         panelDetalles.add(btnAgregar, gbc);
+        btnAgregar = crearBoton("Agregar al pedido", new Color(0, 123, 255));
+        btnFinalizar = crearBoton("Finalizar pedido", new Color(40, 167, 69));
 
         btnFinalizar = new JButton("Finalizar pedido");
         btnFinalizar.setBackground(new Color(40, 167, 69));
@@ -242,7 +245,10 @@ public class FrmCrearPedidoProgramado extends JFrame {
             detallesPedido.add(detalle);
             modeloLista.addElement(productoSeleccionado.getNombre() + " x" + cantidad + (nota.isBlank() ? "" : " [" + nota + "]"));
 
-            JOptionPane.showMessageDialog(this, "Producto agregado al pedido");
+            JOptionPane.showMessageDialog(this,
+        "Producto agregado correctamente",
+        "Éxito",
+        JOptionPane.INFORMATION_MESSAGE);
 
         } catch (NumberFormatException ex) {
             JOptionPane.showMessageDialog(this, "Cantidad inválida");
@@ -250,75 +256,114 @@ public class FrmCrearPedidoProgramado extends JFrame {
     }
 
     private void finalizarPedido() {
+
     if (detallesPedido.isEmpty()) {
-        JOptionPane.showMessageDialog(this, 
-            "Agrega al menos un producto al pedido");
+        JOptionPane.showMessageDialog(this,
+                "Agrega al menos un producto al pedido");
         return;
     }
 
     double subtotal = calcularSubtotal();
-    double descuento = 0;
+    String codigoCupon = txtCupon.getText().trim();
 
-    // Aquí después validaremos cupón real desde BO
-    if (!txtCupon.getText().isBlank()) {
-        descuento = 10; // temporal para pruebas
+    try {
+
+        //  negocio valida y calcula descuento real
+        double descuento = pedidoBO.calcularDescuento(codigoCupon, subtotal);
+        double total = subtotal - descuento;
+
+        mostrarResumenPedido(subtotal, descuento, total);
+
+    } catch (NegocioException ex) {
+        JOptionPane.showMessageDialog(this,
+                ex.getMessage(),
+                "Cupón inválido",
+                JOptionPane.ERROR_MESSAGE);
     }
-
-    double total = subtotal - descuento;
-
-    mostrarResumenPedido(subtotal, descuento, total);
 }
-    private void mostrarResumenPedido(double subtotal, double descuento, double total) {
+     private void mostrarResumenPedido(double subtotal, double descuento, double total) {
 
-    JDialog dialogo = new JDialog(this, "Resumen del Pedido", true);
-    dialogo.setSize(400, 500);
+    JDialog dialogo = new JDialog(this, "Confirmar Pedido", true);
+    dialogo.setSize(420, 520);
     dialogo.setLocationRelativeTo(this);
     dialogo.setLayout(new BorderLayout());
+    dialogo.getContentPane().setBackground(Color.WHITE);
 
-    JTextArea areaResumen = new JTextArea();
-    areaResumen.setEditable(false);
+    JPanel panelContenido = new JPanel();
+    panelContenido.setLayout(new BoxLayout(panelContenido, BoxLayout.Y_AXIS));
+    panelContenido.setBorder(new EmptyBorder(15, 20, 15, 20));
+    panelContenido.setBackground(Color.WHITE);
 
-    StringBuilder sb = new StringBuilder();
-    sb.append("Productos:\n\n");
+    JLabel titulo = new JLabel("Resumen del Pedido");
+    titulo.setFont(new Font("Arial", Font.BOLD, 20));
+    titulo.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+    panelContenido.add(titulo);
+    panelContenido.add(Box.createVerticalStrut(15));
 
     for (DetallePedidoDTO d : detallesPedido) {
-    String nombre = productos.stream()
-            .filter(p -> p.getIdProducto() == d.getIdProducto())
-            .findFirst()
-            .map(ProductoDTO::getNombre)
-            .orElse("Producto");
 
-    sb.append("- ")
-      .append(nombre)
-      .append(" x")
-      .append(d.getCantidad())
-      .append("  $")
-      .append(d.getCantidad() * d.getPrecioUnitario())
-      .append("\n");
-}
+        String nombre = productos.stream()
+                .filter(p -> p.getIdProducto() == d.getIdProducto())
+                .findFirst()
+                .map(ProductoDTO::getNombre)
+                .orElse("Producto");
 
-    sb.append("\n-------------------------\n");
-    sb.append("Subtotal: $").append(subtotal).append("\n");
-    sb.append("Descuento: $").append(descuento).append("\n");
-    sb.append("TOTAL: $").append(total).append("\n");
+        JLabel lblProducto = new JLabel(
+                nombre + "  x" + d.getCantidad() +
+                "   $" + String.format("%.2f", d.getCantidad() * d.getPrecioUnitario())
+        );
 
-    areaResumen.setText(sb.toString());
+        lblProducto.setFont(new Font("Arial", Font.PLAIN, 14));
+        panelContenido.add(lblProducto);
+    }
 
-    JButton btnConfirmar = new JButton("Confirmar Pedido");
-    btnConfirmar.setBackground(new Color(40, 167, 69));
-    btnConfirmar.setForeground(Color.WHITE);
+    panelContenido.add(Box.createVerticalStrut(15));
+    panelContenido.add(new JSeparator());
+    panelContenido.add(Box.createVerticalStrut(10));
+
+    panelContenido.add(new JLabel("Subtotal: $" + String.format("%.2f", subtotal)));
+    panelContenido.add(new JLabel("Descuento: $" + String.format("%.2f", descuento)));
+
+    JLabel lblTotal = new JLabel("TOTAL: $" + String.format("%.2f", total));
+    lblTotal.setFont(new Font("Arial", Font.BOLD, 16));
+    lblTotal.setForeground(new Color(40, 167, 69));
+
+    panelContenido.add(Box.createVerticalStrut(10));
+    panelContenido.add(lblTotal);
+
+    JButton btnConfirmar = crearBoton("Confirmar Pedido", new Color(40, 167, 69));
+    JButton btnCancelar = crearBoton("Cancelar", new Color(220, 53, 69));
+
+    JPanel panelBotones = new JPanel();
+    panelBotones.setBackground(Color.WHITE);
+    panelBotones.add(btnConfirmar);
+    panelBotones.add(btnCancelar);
 
     btnConfirmar.addActionListener(e -> {
         guardarPedidoEnBD(subtotal, descuento, total);
         dialogo.dispose();
     });
 
-    dialogo.add(new JScrollPane(areaResumen), BorderLayout.CENTER);
-    dialogo.add(btnConfirmar, BorderLayout.SOUTH);
+    btnCancelar.addActionListener(e -> dialogo.dispose());
+
+    dialogo.add(panelContenido, BorderLayout.CENTER);
+    dialogo.add(panelBotones, BorderLayout.SOUTH);
 
     dialogo.setVisible(true);
 }
 
+    private JButton crearBoton(String texto, Color color) {
+    JButton boton = new JButton(texto);
+    boton.setBackground(color);
+    boton.setForeground(Color.WHITE);
+    boton.setFocusPainted(false);
+    boton.setFont(new Font("Arial", Font.BOLD, 14));
+    boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    boton.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
+    return boton;
+  }
+     
     private double calcularSubtotal() {
     double subtotal = 0;
 
@@ -333,20 +378,24 @@ public class FrmCrearPedidoProgramado extends JFrame {
 
     try {
 
+        String codigoCupon = txtCupon.getText().trim();
+
         PedidoProgramadoDTO dto = new PedidoProgramadoDTO(
                 idCliente,
                 idEmpleado,
                 subtotal,
                 descuento,
                 total,
-                txtCupon.getText().isBlank() ? null : 1,
+                codigoCupon, 
                 detallesPedido
         );
 
         pedidoBO.registrarPedido(dto);
 
         JOptionPane.showMessageDialog(this,
-                "Pedido guardado correctamente");
+        "Pedido creado exitosamente",
+        "Pedido Confirmado",
+        JOptionPane.INFORMATION_MESSAGE);
 
         limpiarFormulario();
 
@@ -357,13 +406,20 @@ public class FrmCrearPedidoProgramado extends JFrame {
                 JOptionPane.ERROR_MESSAGE);
     }
 }
-   private void limpiarFormulario() {
+private void limpiarFormulario() {
+
     detallesPedido.clear();
     modeloLista.clear();
+
     txtCupon.setText("");
+    txtCantidad.setText("1");
+    txtNota.setText("");
+
     lblNombre.setText("Nombre:");
     lblPrecio.setText("Precio:");
     lblDescripcion.setText("Descripción:");
+
+    productoSeleccionado = null;
 }
 
 }
