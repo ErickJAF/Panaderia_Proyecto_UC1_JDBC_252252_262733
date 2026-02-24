@@ -5,6 +5,7 @@
 package negocio.DTOs;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -19,7 +20,7 @@ public class PedidoExpressDTO {
     private String estado;
     private String pin;
     private LocalDateTime fechaCreacion;
-    private List<DetallePedidoDTO> detalles;
+    private List<DetallePedidoDTO> detalles = new ArrayList<>();
     private LocalDateTime fechaListo;
 
     public PedidoExpressDTO() {}

@@ -17,9 +17,8 @@ public class FrmPanelEmpleado extends JFrame {
     private final IPedidoExpressBO pedidoExpressBO;
     private final IPedidoProgramadoBO pedidoProgramadoBO;
 
-    private JButton btnPendientes;
-    private JButton btnBuscar;
-    private JButton btnEntregaPago;
+    private JButton btnGestionDeEntregas;
+    private JButton btnGestionProductos;
     private JButton btnCerrarSesion;
 
    public FrmPanelEmpleado(IUsuarioBO usuarioBO,
@@ -50,19 +49,18 @@ public class FrmPanelEmpleado extends JFrame {
         panel.setBorder(BorderFactory.createEmptyBorder(30, 40, 30, 40));
         panel.setBackground(Color.WHITE);
 
-        btnPendientes = crearBoton("Ver Pedidos Pendientes");
-        btnBuscar = crearBoton("Buscar Pedido");
-        btnEntregaPago = crearBoton("Registrar Entrega y Pago");
+        btnGestionDeEntregas = crearBoton("Gestionar Entregas");
+        btnGestionProductos = crearBoton("Gestionar Productos");
         btnCerrarSesion = crearBoton("Cerrar Sesión");
 
-        panel.add(btnPendientes);
-        panel.add(btnBuscar);
-        panel.add(btnEntregaPago);
+        panel.add(btnGestionDeEntregas);
+        panel.add(btnGestionProductos);
         panel.add(btnCerrarSesion);
 
         add(panel, BorderLayout.CENTER);
 
         btnCerrarSesion.addActionListener(e -> cerrarSesion());
+        btnGestionDeEntregas.addActionListener(e -> abrirGestionEntregas());
     }
 
     private JButton crearBoton(String texto) {
@@ -71,6 +69,13 @@ public class FrmPanelEmpleado extends JFrame {
         btn.setForeground(Color.WHITE);
         btn.setFocusPainted(false);
         return btn;
+    }
+    
+    private void abrirGestionEntregas() {
+        dispose(); // Cierra el panel actual (opcional, pero recomendado)
+
+        FrmGestionDeEntregas frm = new FrmGestionDeEntregas();
+        frm.setVisible(true);
     }
 
     private void cerrarSesion() {

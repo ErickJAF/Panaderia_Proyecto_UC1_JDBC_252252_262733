@@ -1,6 +1,7 @@
 package negocio.DTOs;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 public class PedidoProgramadoDTO {
@@ -16,7 +17,7 @@ public class PedidoProgramadoDTO {
     private double subtotal;
     private double descuento;
     private double total;
-    private List<DetallePedidoDTO> detalles;
+    private List<DetallePedidoDTO> detalles = new ArrayList<>();
 
     private Integer idCupon;
     private String codigoCupon;
