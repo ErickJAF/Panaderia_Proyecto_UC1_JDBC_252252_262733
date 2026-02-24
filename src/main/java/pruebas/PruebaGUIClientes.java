@@ -5,7 +5,9 @@
 package pruebas;
 
 import java.time.LocalDate;
+import javax.swing.SwingUtilities;
 import negocio.BOs.ClienteBO;
+import negocio.BOs.IClienteBO;
 import negocio.excepciones.NegocioException;
 import persistencia.DAOs.ClienteDAO;
 import persistencia.DAOs.IClienteDAO;
@@ -14,38 +16,26 @@ import persistencia.DAOs.UsuarioDAO;
 import persistencia.conexion.ConexionBD;
 import persistencia.conexion.IConexionBD;
 import persistencia.dominio.Cliente;
+import presentacion.FrmGestionClientes;
 
 /**
  *
  * @author josed
  */
-public class pruebaCliente {
 
-   public static void main(String[] args) {
+public class PruebaGUIClientes {
 
-    try {
+    public static void main(String[] args) {
 
         IConexionBD conexion = new ConexionBD();
 
         IClienteDAO clienteDAO = new ClienteDAO(conexion);
         IUsuarioDAO usuarioDAO = new UsuarioDAO(conexion);
 
-        ClienteBO clienteBO = new ClienteBO(clienteDAO, usuarioDAO);
+        IClienteBO clienteBO = new ClienteBO(clienteDAO, usuarioDAO);
 
-        Cliente nuevo = new Cliente(
-        "Pedro Lopez Nuevo",
-        LocalDate.of(1999, 3, 15),
-        "Calle 20",
-        "Centro",
-        55
+        SwingUtilities.invokeLater(() ->
+                new FrmGestionClientes(clienteBO).setVisible(true)
         );
-
-        clienteBO.registrarCliente(nuevo);
-
-        System.out.println("Cliente registrado correctamente.");
-
-    } catch (NegocioException e) {
-        e.printStackTrace();
     }
-}
 }
