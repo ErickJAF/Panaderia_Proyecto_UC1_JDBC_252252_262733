@@ -21,7 +21,6 @@ CREATE TABLE CLIENTE (
     fecha_nacimiento DATE NOT NULL,
     calle VARCHAR(40) NOT NULL,
     colonia VARCHAR(40) NOT NULL,
-    numero INT NOT NULL,
     FOREIGN KEY (id_cliente) REFERENCES USUARIO(id_usuario)
 );
 
@@ -125,10 +124,10 @@ VALUES
 (1, 'Carlos Ramírez'),
 (2, 'Ana López');
 
-INSERT INTO CLIENTE (id_cliente, nombre_completo, fecha_nacimiento, calle, colonia, numero)
+INSERT INTO CLIENTE (id_cliente, nombre_completo, fecha_nacimiento, calle, colonia)
 VALUES
-(3, 'Luis Martínez', '1998-05-12', 'Av. Juárez', 'Centro', 120),
-(4, 'María González', '2000-08-21', 'Calle Hidalgo', 'Reforma', 45);
+(3, 'Luis Martínez', '1998-05-12', 'Av. Juárez', 'Centro'),
+(4, 'María González', '2000-08-21', 'Calle Hidalgo', 'Reforma');
 
 INSERT INTO TELEFONO (numero, etiqueta, id_cliente)
 VALUES
