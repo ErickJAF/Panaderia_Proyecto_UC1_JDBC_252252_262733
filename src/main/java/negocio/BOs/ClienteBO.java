@@ -143,4 +143,22 @@ public void registrarCliente(Cliente cliente) throws NegocioException {
             }
         }
     }
+    public void desactivarCliente(int idCliente)
+        throws NegocioException {
+
+    try {
+
+        Cliente cliente = clienteDAO.buscarPorId(idCliente);
+
+        if (cliente == null) {
+            throw new NegocioException("Cliente no existe");
+        }
+
+        usuarioDAO.desactivarUsuario(idCliente);
+
+    } catch (PersistenciaException e) {
+        throw new NegocioException(
+                "Error al desactivar cliente", e);
+    }
+}
 }

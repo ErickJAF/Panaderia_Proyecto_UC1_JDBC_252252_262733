@@ -118,4 +118,30 @@ public void actualizarPerfil(int idUsuario,
         throw new PersistenciaException("Error al actualizar perfil", e);
     }
 }
+
+    /**
+     *
+     * @param idUsuario
+     * @throws PersistenciaException
+     */
+    @Override
+     public void desactivarUsuario(int idUsuario) throws PersistenciaException {
+
+    String sql = """
+        UPDATE USUARIO
+        SET activo = FALSE
+        WHERE id_usuario = ?
+    """;
+
+    try (Connection con = conexionBD.crearConexion();
+         PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setInt(1, idUsuario);
+        ps.executeUpdate();
+
+    } catch (SQLException e) {
+        throw new PersistenciaException(
+                "Error al desactivar usuario", e);
+    }
+}
 }

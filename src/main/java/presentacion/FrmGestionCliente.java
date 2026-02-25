@@ -5,19 +5,13 @@
 package presentacion;
 
 import java.awt.GridLayout;
-import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.swing.*;
 
-import negocio.BOs.IClienteBO;
-import negocio.excepciones.NegocioException;
+
 import persistencia.dominio.Cliente;
 
-import javax.swing.*;
-import java.awt.*;
+
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
@@ -89,7 +83,7 @@ public class FrmGestionCliente extends JFrame {
         // Eventos
         btnRegistrar.addActionListener(e -> registrarCliente());
         btnActualizar.addActionListener(e -> actualizarCliente());
-        //btnEliminar.addActionListener(e -> darDeBaja());
+        btnEliminar.addActionListener(e -> darDeBaja());
         btnBuscar.addActionListener(e -> buscarCliente());
     }
 
@@ -126,28 +120,28 @@ public class FrmGestionCliente extends JFrame {
         }
     }
 
-//    private void darDeBaja() {
-//
-//        int confirm = JOptionPane.showConfirmDialog(this,
-//                "¿Seguro que desea desactivar el cliente?",
-//                "Confirmar",
-//                JOptionPane.YES_NO_OPTION);
-//
-//        if (confirm == JOptionPane.YES_OPTION) {
-//            try {
-//                int id = Integer.parseInt(txtId.getText());
-//                clienteBO.desactivarCliente(id);
-//                JOptionPane.showMessageDialog(this,
-//                        "Cliente desactivado correctamente");
-//                limpiarCampos();
-//            } catch (Exception e) {
-//                JOptionPane.showMessageDialog(this,
-//                        e.getMessage(),
-//                        "Error",
-//                        JOptionPane.ERROR_MESSAGE);
-//            }
-//        }
-//    }
+    private void darDeBaja() {
+
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "¿Seguro que desea desactivar el cliente?",
+                "Confirmar",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                int id = Integer.parseInt(txtId.getText());
+                clienteBO.desactivarCliente(id);
+                JOptionPane.showMessageDialog(this,
+                        "Cliente desactivado correctamente");
+                limpiarCampos();
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(this,
+                        e.getMessage(),
+                        "Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
     private void buscarCliente() {
 
@@ -191,7 +185,17 @@ public class FrmGestionCliente extends JFrame {
         LocalDate fecha = LocalDate.parse(txtFecha.getText());
 
         List<String> telefonos = Arrays.asList(
-                txtTelefonos.getText().split(","));
+        txtTelefonos.getText().split(","));
+
+for (String tel : telefonos) {
+
+    String limpio = tel.trim();
+
+    if (!limpio.matches("\\d{10}")) {
+        throw new Exception(
+            "Los teléfonos deben tener 10 dígitos numéricos");
+    }
+}
 
         Cliente cliente = new Cliente();
         cliente.setIdCliente(id);

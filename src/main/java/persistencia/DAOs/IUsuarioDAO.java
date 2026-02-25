@@ -25,4 +25,6 @@ public interface IUsuarioDAO {
                       String correo,
                       String password)
         throws PersistenciaException;
+
+    public void desactivarUsuario(int idCliente) throws PersistenciaException;
 }
