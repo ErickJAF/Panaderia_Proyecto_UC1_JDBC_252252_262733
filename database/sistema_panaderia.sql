@@ -302,3 +302,5 @@ BEGIN
 END //
 
 DELIMITER ;
+
+alter table usuario add column activo boolean not null default true;
