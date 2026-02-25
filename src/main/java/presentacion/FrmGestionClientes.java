@@ -75,38 +75,38 @@ public class FrmGestionClientes extends JFrame {
     }
 
     private void registrarCliente() {
-
-        try {
-
-            Cliente cliente = new Cliente(
-                    txtNombre.getText().trim(),
-                    LocalDate.parse(txtFechaNacimiento.getText().trim()),
-                    txtCalle.getText().trim(),
-                    txtColonia.getText().trim(),
-                    Integer.parseInt(txtNumero.getText().trim())
-            );
-
-            clienteBO.registrarCliente(cliente);
-
-            JOptionPane.showMessageDialog(this,
-                    "Cliente registrado correctamente.");
-
-            limpiarCampos();
-
-        } catch (NegocioException ex) {
-
-            JOptionPane.showMessageDialog(this,
-                    ex.getMessage(),
-                    "Error de negocio",
-                    JOptionPane.ERROR_MESSAGE);
-
-        } catch (Exception ex) {
-
-            JOptionPane.showMessageDialog(this,
-                    "Datos inválidos. Verifique formato.",
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
-        }
+//
+//        try {
+//
+//            Cliente cliente = new Cliente(
+//                    txtNombre.getText().trim(),
+//                    LocalDate.parse(txtFechaNacimiento.getText().trim()),
+//                    txtCalle.getText().trim(),
+//                    txtColonia.getText().trim(),
+//                    Integer.parseInt(txtNumero.getText().trim())
+//            );
+//
+//            clienteBO.registrarCliente(cliente);
+//
+//            JOptionPane.showMessageDialog(this,
+//                    "Cliente registrado correctamente.");
+//
+//            limpiarCampos();
+//
+//        } catch (NegocioException ex) {
+//
+//            JOptionPane.showMessageDialog(this,
+//                    ex.getMessage(),
+//                    "Error de negocio",
+//                    JOptionPane.ERROR_MESSAGE);
+//
+//        } catch (Exception ex) {
+//
+//            JOptionPane.showMessageDialog(this,
+//                    "Datos inválidos. Verifique formato.",
+//                    "Error",
+//                    JOptionPane.ERROR_MESSAGE);
+//        }
     }
 
     private void limpiarCampos() {

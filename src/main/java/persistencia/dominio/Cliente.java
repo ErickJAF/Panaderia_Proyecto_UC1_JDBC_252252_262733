@@ -1,15 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package persistencia.dominio;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- *
- * @author ERICK
- */
 public class Cliente extends Usuario {
 
     private int idCliente;
@@ -17,30 +11,43 @@ public class Cliente extends Usuario {
     private LocalDate fechaNacimiento;
     private String calle;
     private String colonia;
-    private int numero;
+
+    private List<String> telefonos;
 
     public Cliente() {
+        this.telefonos = new ArrayList<>();
     }
 
-    public Cliente(String nombreCompleto, LocalDate fechaNacimiento,
-                   String calle, String colonia, int numero) {
+    public Cliente(String nombreCompleto,
+                   LocalDate fechaNacimiento,
+                   String calle,
+                   String colonia,
+                   List<String> telefonos) {
+
         this.nombreCompleto = nombreCompleto;
         this.fechaNacimiento = fechaNacimiento;
         this.calle = calle;
         this.colonia = colonia;
-        this.numero = numero;
+        this.telefonos = telefonos != null
+                ? telefonos
+                : new ArrayList<>();
     }
 
-    public Cliente(int idCliente, String nombreCompleto,
+    public Cliente(int idCliente,
+                   String nombreCompleto,
                    LocalDate fechaNacimiento,
-                   String calle, String colonia, int numero) {
+                   String calle,
+                   String colonia,
+                   List<String> telefonos) {
 
         this.idCliente = idCliente;
         this.nombreCompleto = nombreCompleto;
         this.fechaNacimiento = fechaNacimiento;
         this.calle = calle;
         this.colonia = colonia;
-        this.numero = numero;
+        this.telefonos = telefonos != null
+                ? telefonos
+                : new ArrayList<>();
     }
 
     public int getIdCliente() {
@@ -63,8 +70,8 @@ public class Cliente extends Usuario {
         return colonia;
     }
 
-    public int getNumero() {
-        return numero;
+    public List<String> getTelefonos() {
+        return telefonos;
     }
 
     public void setIdCliente(int idCliente) {
@@ -87,12 +94,28 @@ public class Cliente extends Usuario {
         this.colonia = colonia;
     }
 
-    public void setNumero(int numero) {
-        this.numero = numero;
+    public void setTelefonos(List<String> telefonos) {
+        this.telefonos = telefonos;
+    }
+
+    // 🔹 Métodos útiles opcionales
+    public void agregarTelefono(String telefono) {
+        this.telefonos.add(telefono);
+    }
+
+    public void eliminarTelefono(String telefono) {
+        this.telefonos.remove(telefono);
     }
 
     @Override
     public String toString() {
-        return "Cliente{" + "idCliente=" + idCliente + ", nombreCompleto=" + nombreCompleto + ", fechaNacimiento=" + fechaNacimiento + ", calle=" + calle + ", colonia=" + colonia + ", numero=" + numero + '}';
+        return "Cliente{" +
+                "idCliente=" + idCliente +
+                ", nombreCompleto=" + nombreCompleto +
+                ", fechaNacimiento=" + fechaNacimiento +
+                ", calle=" + calle +
+                ", colonia=" + colonia +
+                ", telefonos=" + telefonos +
+                '}';
     }
 }

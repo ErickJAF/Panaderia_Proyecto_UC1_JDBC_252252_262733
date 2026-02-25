@@ -199,9 +199,13 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
             throws PersistenciaException {
 
         String sql = """
-            SELECT p.id_pedido, p.subtotal, p.total,
-                   p.estado, p.fecha_creacion,
-                   e.folio, e.pin_seguridad,
+            SELECT p.id_pedido,
+                   p.subtotal,
+                   p.total,
+                   p.estado,
+                   p.fecha_creacion,
+                   e.folio,
+                   e.pin_seguridad,
                    e.fecha_listo
             FROM PEDIDO p
             JOIN EXPRESS e ON p.id_pedido = e.id_pedido
@@ -215,10 +219,11 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
 
             try (ResultSet rs = ps.executeQuery()) {
 
-                if (!rs.next()) return null;
+                if (!rs.next()) {
+                    return null;
+                }
 
-                PedidoExpressDTO dto =
-                        new PedidoExpressDTO();
+                PedidoExpressDTO dto = new PedidoExpressDTO();
 
                 dto.setIdPedido(rs.getInt("id_pedido"));
                 dto.setFolio(rs.getInt("folio"));
@@ -227,7 +232,7 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
                 dto.setEstado(rs.getString("estado"));
                 dto.setFechaCreacion(
                         rs.getTimestamp("fecha_creacion")
-                                .toLocalDateTime());
+                          .toLocalDateTime());
                 dto.setPin(rs.getString("pin_seguridad"));
 
                 Timestamp ts = rs.getTimestamp("fecha_listo");
@@ -235,13 +240,57 @@ public class PedidoExpressDAO implements IPedidoExpressDAO {
                     dto.setFechaListo(ts.toLocalDateTime());
                 }
 
+                // 🔹 Obtener detalles igual que en Programado
+                List<DetallePedidoDTO> detalles =
+                        obtenerDetalles(conn, idPedido);
+
+                dto.setDetalles(detalles);
+
                 return dto;
             }
 
-        } catch (SQLException e) {
+        } catch (SQLException ex) {
             throw new PersistenciaException(
-                    "Error al buscar pedido", e);
+                    "Error al buscar PedidoExpressDTO", ex);
         }
+    }
+    
+    private List<DetallePedidoDTO> obtenerDetalles(Connection conn, int idPedido) throws SQLException {
+
+        String sql = """
+            SELECT id_producto,
+                   cantidad,
+                   precio_unitario,
+                   nota
+            FROM DETALLE_PEDIDO
+            WHERE id_pedido = ?
+        """;
+
+        List<DetallePedidoDTO> lista = new ArrayList<>();
+
+        try (PreparedStatement ps =
+                conn.prepareStatement(sql)) {
+
+            ps.setInt(1, idPedido);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                while (rs.next()) {
+
+                    DetallePedidoDTO detalle =
+                            new DetallePedidoDTO(
+                                    rs.getInt("id_producto"),
+                                    rs.getInt("cantidad"),
+                                    rs.getDouble("precio_unitario"),
+                                    rs.getString("nota")
+                            );
+
+                    lista.add(detalle);
+                }
+            }
+        }
+
+        return lista;
     }
 
     @Override

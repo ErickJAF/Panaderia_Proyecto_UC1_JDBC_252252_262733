@@ -119,4 +119,14 @@ public class PedidoBO implements IPedidoBO{
             );
         }
     }
+    
+    @Override
+    public List<PedidoEntregaDTO> obtenerTodos() throws NegocioException {
+        try {
+            return pedidoDAO.obtenerTodos();
+        } catch (PersistenciaException ex) {
+            LOG.log(Level.SEVERE, "Error al obtener todos los pedidos", ex);
+            throw new NegocioException("No se pudieron obtener los pedidos", ex);
+        }
+    }
 }

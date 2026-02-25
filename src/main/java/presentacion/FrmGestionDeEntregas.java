@@ -34,7 +34,8 @@ public class FrmGestionDeEntregas extends JFrame {
         configurarVentana();
         inicializarBOs();
         inicializarComponentes();
-        cargarPedidosPorEstado("Pendiente");
+        cargarPedidosTodos();
+        comboEstado.setSelectedItem("Todos");
     }
 
     private void configurarVentana() {
@@ -66,8 +67,6 @@ public class FrmGestionDeEntregas extends JFrame {
 
     pedidoProgramadoBO =
             new PedidoProgramadoBO(pedidoProgramadoDAO, detallePedidoDAO, cuponDAO);
-
-    new HistorialEstadoBO(new HistorialEstadoDAO(conexionBD));
 }
 
     private void inicializarComponentes() {
@@ -88,11 +87,24 @@ public class FrmGestionDeEntregas extends JFrame {
         gbc.insets = new Insets(6, 6, 6, 6);
         gbc.fill = GridBagConstraints.BOTH;
 
-        configurarFilaFiltro(cardFiltros, gbc, 0, "Estado:", comboEstado = new JComboBox<>(new String[]{"Pendiente", "Listo", "Entregado", "Cancelado", "No Entregado"}), null);
-
+        configurarFilaFiltro(
+            cardFiltros,
+            gbc,
+            0,
+            "Estado:",
+            comboEstado = new JComboBox<>(new String[]{
+                "Todos", "Pendiente", "Listo", "Entregado", "Cancelado", "No Entregado"
+            }),
+            null
+        );
+        
         comboEstado.addActionListener(e -> {
             String estadoSeleccionado = (String) comboEstado.getSelectedItem();
-            if (estadoSeleccionado != null) {
+            if (estadoSeleccionado == null) return;
+
+            if ("Todos".equalsIgnoreCase(estadoSeleccionado)) {
+                cargarPedidosTodos();
+            } else {
                 cargarPedidosPorEstado(estadoSeleccionado);
             }
         });
@@ -114,7 +126,7 @@ public class FrmGestionDeEntregas extends JFrame {
 
         modelPedidos = new DefaultListModel<>();
         listaPedidos = new JList<>(modelPedidos);
-        listaPedidos.setCellRenderer(new PedidoListRenderer());
+        listaPedidos.setCellRenderer(new mostrarDatosDelPedido());
         listaPedidos.setFixedCellHeight(60);
         listaPedidos.addListSelectionListener(e -> mostrarDetallesPedido(listaPedidos.getSelectedValue()));
 
@@ -152,6 +164,26 @@ public class FrmGestionDeEntregas extends JFrame {
         split.setRightComponent(panelDerecho);
         btnCambiarEstado.addActionListener(e -> cambiarEstadoPedido());
     }
+    
+    private void cargarPedidosTodos() {
+        try {
+            List<PedidoEntregaDTO> pedidos = pedidoBO.obtenerTodos();
+            modelPedidos.clear();
+            for (PedidoEntregaDTO p : pedidos) {
+                if (p.getNombreCliente() == null) {
+                    try {
+                        pedidoExpressBO.validarTiempoEntrega(p.getIdPedido());
+                    } catch (NegocioException ex) {
+                        mostrarError("Error al cargar pedidos", ex);
+                    }
+                }
+
+                modelPedidos.addElement(p);
+            }
+        } catch (NegocioException ex) {
+            mostrarError("Error al cargar pedidos", ex);
+        }
+    }
 
     private void configurarFilaFiltro(JPanel panel, GridBagConstraints gbc, int fila, String texto, JComponent comp, JButton boton) {
         gbc.gridy = fila;
@@ -188,7 +220,7 @@ public class FrmGestionDeEntregas extends JFrame {
         return b;
     }
 
-    private class PedidoListRenderer extends DefaultListCellRenderer {
+    private class mostrarDatosDelPedido extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             JPanel itemPanel = new JPanel(new BorderLayout(15, 0));
@@ -206,7 +238,7 @@ public class FrmGestionDeEntregas extends JFrame {
                 lblSecundario.setForeground(new Color(100, 100, 100));
 
                 if (p.getNombreCliente() == null || p.getNombreCliente().isEmpty()) {
-                    lblPrincipal.setText("EXPRESS - Folio: " + p.getFolio());
+                    lblPrincipal.setText("PEDIDO EXPRESS");
                     lblSecundario.setText("Estado: " + p.getEstado());
                     lblPrincipal.setForeground(new Color(230, 81, 0));
                 } else {
@@ -243,6 +275,7 @@ public class FrmGestionDeEntregas extends JFrame {
 
     private void filtrarPorCliente() {
         try {
+            comboEstado.setSelectedItem("Todos");
             String cliente = txtCliente.getText().trim();
             if (!cliente.isEmpty()) {
                 modelPedidos.clear();
@@ -253,6 +286,7 @@ public class FrmGestionDeEntregas extends JFrame {
 
     private void filtrarPorTelefono() {
         try {
+            comboEstado.setSelectedItem("Todos");
             String tel = txtTelefono.getText().trim();
             if (!tel.isEmpty()) {
                 modelPedidos.clear();
@@ -263,6 +297,7 @@ public class FrmGestionDeEntregas extends JFrame {
 
     private void filtrarPorFolio() {
         try {
+            comboEstado.setSelectedItem("Todos");
             String f = txtFolio.getText().trim();
             if (!f.isEmpty()) {
                 modelPedidos.clear();
@@ -273,6 +308,7 @@ public class FrmGestionDeEntregas extends JFrame {
 
     private void filtrarPorFecha() {
         try {
+            comboEstado.setSelectedItem("Todos");
             java.util.Date fecha = (java.util.Date) spinnerFecha.getValue();
             LocalDate inicio = new java.sql.Date(fecha.getTime()).toLocalDate();
             modelPedidos.clear();
@@ -294,15 +330,21 @@ public class FrmGestionDeEntregas extends JFrame {
             sb.append("  ").append(esExpress ? "PEDIDO EXPRESS" : "PEDIDO PROGRAMADO").append("\n");
             sb.append("  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n");
             sb.append("   [DATOS GENERALES]\n");
-
-            if (esExpress) sb.append("   • Folio:     ").append(pedido.getFolio()).append("\n");
+            
             sb.append("   • Estado:    ").append(pedido.getEstado().toUpperCase()).append("\n");
             sb.append("   • Fecha:     ").append(pedido.getFechaCreacion()).append("\n\n");
 
             if (esExpress) {
                 lblTipoPedido.setText("Gestión Express");
-PedidoExpressDTO pExp = pedidoExpressBO.buscarPorId(pedido.getIdPedido());                sb.append("   [SEGURIDAD]\n");
-                agregarTablaProductos(sb, pExp.getDetalles());
+
+                PedidoExpressDTO pExp = pedidoExpressBO.buscarPorId(pedido.getIdPedido());
+
+                if (pExp == null) {
+                    sb.append("   No se pudo cargar información del pedido express.\n");
+                } else {
+                    sb.append("   [PRODUCTOS]\n");
+                    agregarTablaProductos(sb, pExp.getDetalles());
+                }
             } else {
                 lblTipoPedido.setText("Gestión Programada");
                 PedidoProgramadoDTO pProg = pedidoProgramadoBO.buscarPorIdDTO(pedido.getIdPedido());
@@ -325,12 +367,25 @@ PedidoExpressDTO pExp = pedidoExpressBO.buscarPorId(pedido.getIdPedido());      
     }
 
     private void agregarTablaProductos(StringBuilder sb, List<DetallePedidoDTO> detalles) {
+
+        if (detalles == null || detalles.isEmpty()) {
+            sb.append("   No hay productos registrados.\n");
+            return;
+        }
+
         sb.append("   [PRODUCTOS]\n");
         sb.append(String.format("   %-15s %-10s %-10s\n", "ID Prod.", "Cant.", "Precio"));
         sb.append("   ------------------------------------\n");
+
         for (DetallePedidoDTO d : detalles) {
-            sb.append(String.format("   %-15d %-10d $%-10.2f\n", d.getIdProducto(), d.getCantidad(), d.getPrecioUnitario()));
-            if(d.getNota() != null && !d.getNota().isEmpty()) sb.append("     └ Nota: ").append(d.getNota()).append("\n");
+            sb.append(String.format("   %-15d %-10d $%-10.2f\n",
+                    d.getIdProducto(),
+                    d.getCantidad(),
+                    d.getPrecioUnitario()));
+
+            if (d.getNota() != null && !d.getNota().isEmpty()) {
+                sb.append("     └ Nota: ").append(d.getNota()).append("\n");
+            }
         }
     }
 
@@ -374,7 +429,7 @@ PedidoExpressDTO pExp = pedidoExpressBO.buscarPorId(pedido.getIdPedido());      
                 );
 
                 if (opcion != JOptionPane.OK_OPTION) {
-                    return; // Canceló
+                    return;
                 }
 
                 String pinIngresado = new String(passwordField.getPassword());

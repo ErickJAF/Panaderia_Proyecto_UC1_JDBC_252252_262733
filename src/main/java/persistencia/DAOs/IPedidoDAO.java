@@ -27,4 +27,6 @@ public interface IPedidoDAO {
     void generarPago(double monto, String metodoPago, int id) throws PersistenciaException;
     
     PedidoEntregaDTO buscarPorId(int idPedido) throws PersistenciaException;
+    
+    List<PedidoEntregaDTO> obtenerTodos() throws PersistenciaException;
 }

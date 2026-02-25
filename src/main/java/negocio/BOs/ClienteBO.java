@@ -126,8 +126,21 @@ public void registrarCliente(Cliente cliente) throws NegocioException {
             throw new NegocioException("La colonia es obligatoria.");
         }
 
-        if (cliente.getNumero() <= 0) {
-            throw new NegocioException("El número debe ser mayor a 0.");
+        if (cliente.getTelefonos() == null || cliente.getTelefonos().isEmpty()) {
+
+            throw new NegocioException("Debe registrar al menos un número de teléfono.");
+        }
+
+        for (String telefono : cliente.getTelefonos()) {
+
+            if (telefono == null || telefono.isBlank()) {
+                throw new NegocioException("No puede haber teléfonos vacíos.");
+            }
+
+            if (!telefono.matches("\\d{7,15}")) {
+                throw new NegocioException(
+                        "El teléfono debe contener solo números y tener entre 7 y 15 dígitos.");
+            }
         }
     }
 }

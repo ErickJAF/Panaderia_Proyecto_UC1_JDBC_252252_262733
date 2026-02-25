@@ -253,7 +253,7 @@ public class PedidoDAO implements IPedidoDAO{
             ps.setInt(1, idPedido);
             ps.setDouble(2, monto);
             ps.setString(3, metodoPago);
-            ps.setObject(4, LocalDate.now());
+            ps.setDate(4, java.sql.Date.valueOf(LocalDate.now()));
 
             ps.executeUpdate();
 
@@ -298,6 +298,42 @@ public class PedidoDAO implements IPedidoDAO{
 
         } catch (SQLException e) {
             throw new PersistenciaException("Error al buscar pedido por ID", e);
+        }
+    }
+    
+    @Override
+    public List<PedidoEntregaDTO> obtenerTodos() throws PersistenciaException {
+
+        String sql = """
+            SELECT p.id_pedido, p.fecha_creacion, p.estado, p.total,
+                   c.nombre_completo,
+                   (SELECT numero 
+                    FROM TELEFONO t 
+                    WHERE t.id_cliente = c.id_cliente 
+                    LIMIT 1) AS telefono,
+                   e.folio
+            FROM PEDIDO p
+            LEFT JOIN PROGRAMADO pr ON p.id_pedido = pr.id_pedido
+            LEFT JOIN CLIENTE c ON pr.id_cliente = c.id_cliente
+            LEFT JOIN EXPRESS e ON p.id_pedido = e.id_pedido
+            ORDER BY p.fecha_creacion ASC;
+            """;
+
+        List<PedidoEntregaDTO> lista = new ArrayList<>();
+
+        try (Connection conn = conexionBD.crearConexion();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                lista.add(extraerDTO(rs));
+            }
+
+            return lista;
+
+        } catch (SQLException ex) {
+            LOG.log(Level.SEVERE, "Error al obtener todos los pedidos", ex);
+            throw new PersistenciaException("Error al obtener todos los pedidos", ex);
         }
     }
 }

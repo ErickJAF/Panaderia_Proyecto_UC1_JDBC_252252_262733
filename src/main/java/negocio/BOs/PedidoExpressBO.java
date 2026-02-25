@@ -70,7 +70,6 @@ public class PedidoExpressBO implements IPedidoExpressBO {
         }
     }
 
-    // ⏱ Validar 20 minutos usando fechaListo
     @Override
     public void validarTiempoEntrega(int idPedido)
             throws NegocioException {
@@ -102,9 +101,6 @@ public class PedidoExpressBO implements IPedidoExpressBO {
 
                 pedidoDAO.actualizarEstado(
                         idPedido, "No Entregado");
-
-                throw new NegocioException(
-                        "El pedido superó los 20 minutos y fue marcado como No Entregado.");
             }
 
         } catch (PersistenciaException ex) {
@@ -113,7 +109,6 @@ public class PedidoExpressBO implements IPedidoExpressBO {
         }
     }
 
-    // 🔄 Actualizar estado con reglas correctas
     @Override
     public void actualizarEstado(int idPedido,
                                  String nuevoEstado)
@@ -183,7 +178,6 @@ public class PedidoExpressBO implements IPedidoExpressBO {
         }
     }
 
-    // 🔍 Buscar
     @Override
     public PedidoExpressDTO buscarPorId(int idPedido)
             throws NegocioException {
@@ -206,7 +200,6 @@ public class PedidoExpressBO implements IPedidoExpressBO {
         }
     }
 
-    // 🔐 Validar PIN
     @Override
     public void validarPin(int idPedido,
                            String pinIngresado)
