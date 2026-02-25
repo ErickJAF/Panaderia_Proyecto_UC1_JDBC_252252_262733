@@ -135,8 +135,7 @@ public class FrmCrearPedidoProgramado extends JFrame {
         gbc.gridx = 0;
         gbc.gridy = 6;
         panelDetalles.add(btnAgregar, gbc);
-        btnAgregar = crearBoton("Agregar al pedido", new Color(0, 123, 255));
-        btnFinalizar = crearBoton("Finalizar pedido", new Color(40, 167, 69));
+       
 
         btnFinalizar = new JButton("Finalizar pedido");
         btnFinalizar.setBackground(new Color(40, 167, 69));
