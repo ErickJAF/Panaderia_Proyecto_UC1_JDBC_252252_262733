@@ -4,8 +4,8 @@ import negocio.DTOs.UsuarioDTO;
 import negocio.BOs.IUsuarioBO;
 import negocio.BOs.IProductoBO;
 import negocio.BOs.IPedidoProgramadoBO;
-import negocio.BOs.Sesion;
 import negocio.BOs.IPedidoExpressBO;
+import negocio.BOs.Sesion;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -46,17 +46,13 @@ public class FrmMenuCliente extends JFrame {
     }
 
     private void inicializarComponentes() {
+
         setLayout(new GridBagLayout());
-        GridBagConstraints gbcFrame = new GridBagConstraints();
-        gbcFrame.gridx = 0;
-        gbcFrame.gridy = 0;
-        gbcFrame.weightx = 1.0;
-        gbcFrame.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel container = new JPanel(new GridBagLayout());
         container.setOpaque(false);
         container.setBorder(new EmptyBorder(10, 45, 10, 45));
-        
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.weightx = 1.0;
@@ -66,7 +62,7 @@ public class FrmMenuCliente extends JFrame {
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 26));
         lblTitulo.setForeground(ACCENT_COLOR);
         gbc.gridy = 0;
-        gbc.insets = new Insets(0, 0, 30, 0); 
+        gbc.insets = new Insets(0, 0, 30, 0);
         container.add(lblTitulo, gbc);
 
         JButton btnCrearPedido = crearBotonRectangular("NUEVO PEDIDO PROGRAMADO", ACCENT_COLOR, Color.WHITE);
@@ -75,46 +71,30 @@ public class FrmMenuCliente extends JFrame {
         container.add(btnCrearPedido, gbc);
 
         JButton btnHistorial = crearBotonRectangular("VER MI HISTORIAL", Color.WHITE, ACCENT_COLOR);
-        btnHistorial.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 0, 12, 0);
         container.add(btnHistorial, gbc);
 
-        JButton btnPerfil = crearBotonRectangular("EDITAR PERFIL", Color.WHITE, ACCENT_COLOR);
-        btnPerfil.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
-        gbc.gridy = 3;
-        gbc.insets = new Insets(0, 0, 25, 0);
-        container.add(btnPerfil, gbc);
-
-        JSeparator sep = new JSeparator();
-        gbc.gridy = 4;
-        gbc.insets = new Insets(0, 0, 20, 0);
-        container.add(sep, gbc);
-
         JButton btnCerrarSesion = crearBotonRectangular("CERRAR SESIÓN", Color.WHITE, RED_COLOR);
-        btnCerrarSesion.setBorder(BorderFactory.createLineBorder(new Color(230, 200, 200)));
-        gbc.gridy = 5;
+        gbc.gridy = 3;
         container.add(btnCerrarSesion, gbc);
 
-        add(container, gbcFrame);
+        add(container);
 
+        // 🔹 CORREGIDO
         btnCrearPedido.addActionListener(e -> {
-            try {
-                new FrmCrearPedidoProgramado(
-                        null, 
-                        productoBO,
-                        pedidoProgramadoBO,
-                        1, 
-                        Sesion.getUsuarioActual().getId()
-                ).setVisible(true);
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-            }
+            new FrmCrearPedidoProgramado(
+                    usuarioBO,
+                    productoBO,
+                    pedidoProgramadoBO,
+                    pedidoExpressBO,
+                    false
+            ).setVisible(true);
         });
 
-        btnHistorial.addActionListener(e -> {
-            new FrmHistorialCliente(pedidoProgramadoBO).setVisible(true);
-        });
+        btnHistorial.addActionListener(e ->
+                new FrmHistorialCliente(pedidoProgramadoBO).setVisible(true)
+        );
 
         btnCerrarSesion.addActionListener(e -> cerrarSesion());
     }
@@ -127,13 +107,13 @@ public class FrmMenuCliente extends JFrame {
         btn.setPreferredSize(new Dimension(0, 42));
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        btn.putClientProperty("JButton.buttonType", "square"); 
         return btn;
     }
 
     private void cerrarSesion() {
         Sesion.cerrarSesion();
         dispose();
-        new FrmLogin(usuarioBO, productoBO, pedidoExpressBO, pedidoProgramadoBO).setVisible(true);
+        new FrmLogin(usuarioBO, productoBO, pedidoExpressBO, pedidoProgramadoBO)
+                .setVisible(true);
     }
 }

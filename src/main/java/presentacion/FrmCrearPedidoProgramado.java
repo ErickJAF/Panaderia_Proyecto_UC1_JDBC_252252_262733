@@ -1,10 +1,8 @@
 package presentacion;
 
-import negocio.DTOs.ProductoDTO;
-import negocio.DTOs.DetallePedidoDTO;
-import negocio.BOs.IProductoBO;
-import persistencia.conexion.IConexionBD;
-
+import negocio.DTOs.*;
+import negocio.BOs.*;
+import negocio.excepciones.NegocioException;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -13,63 +11,72 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
-import negocio.BOs.IPedidoProgramadoBO;
-import negocio.DTOs.PedidoProgramadoDTO;
-import negocio.excepciones.NegocioException;
 
 public class FrmCrearPedidoProgramado extends JFrame {
+
     private final IPedidoProgramadoBO pedidoBO;
-    private final int idEmpleado;
-    private final int idCliente;
+    private final IPedidoExpressBO pedidoExpressBO;
+    private final IProductoBO productoBO;
+    private final IUsuarioBO usuarioBO;
+
+    private final boolean esExpress;
 
     private JPanel panelProductos;
     private JPanel panelDetalles;
     private JLabel lblNombre, lblPrecio, lblDescripcion;
     private JTextField txtCantidad, txtCupon;
     private JTextArea txtNota;
-    private JButton btnAgregar, btnFinalizar;
+    private JButton btnAgregar, btnFinalizar, btnVolver;
 
     private List<ProductoDTO> productos;
-    private final IProductoBO productoBO;
-
     private ProductoDTO productoSeleccionado;
-    private List<DetallePedidoDTO> detallesPedido = new ArrayList<>();
-    private DefaultListModel<String> modeloLista = new DefaultListModel<>();
+
+    private final List<DetallePedidoDTO> detallesPedido = new ArrayList<>();
+    private final DefaultListModel<String> modeloLista = new DefaultListModel<>();
     private JList<String> listaDetalles;
 
     public FrmCrearPedidoProgramado(
-        IConexionBD conexionBD,
-        IProductoBO productoBO,
-        IPedidoProgramadoBO pedidoBO,
-        int idEmpleado,
-        int idCliente
-) throws NegocioException {
+            IUsuarioBO usuarioBO,
+            IProductoBO productoBO,
+            IPedidoProgramadoBO pedidoProgramadoBO,
+            IPedidoExpressBO pedidoExpressBO,
+            boolean esExpress
+    ) {
 
-    this.productoBO = productoBO;
-    this.pedidoBO = pedidoBO;
-    this.idEmpleado = idEmpleado;
-    this.idCliente = idCliente;
+        this.usuarioBO = usuarioBO;
+        this.productoBO = productoBO;
+        this.pedidoBO = pedidoProgramadoBO;
+        this.pedidoExpressBO = pedidoExpressBO;
+        this.esExpress = esExpress;
 
-    inicializar();
-    cargarProductos();
-}
+        inicializar();
+        cargarProductosSeguro();
+
+        if (esExpress) {
+            setTitle("Pedido Express");
+            txtCupon.setVisible(false);
+        } else {
+            setTitle("Pedido Programado");
+        }
+    }
 
     private void inicializar() {
-        setTitle("Productos Disponibles");
+
         setSize(1050, 600);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
         getContentPane().setBackground(new Color(240, 240, 240));
 
+        // PANEL PRODUCTOS
         panelProductos = new JPanel();
         panelProductos.setLayout(new BoxLayout(panelProductos, BoxLayout.Y_AXIS));
         JScrollPane scrollProductos = new JScrollPane(panelProductos);
         scrollProductos.setPreferredSize(new Dimension(450, 0));
         add(scrollProductos, BorderLayout.WEST);
 
-        panelDetalles = new JPanel();
-        panelDetalles.setLayout(new GridBagLayout());
+        // PANEL DETALLES
+        panelDetalles = new JPanel(new GridBagLayout());
         panelDetalles.setBorder(BorderFactory.createTitledBorder("Detalle del Producto"));
         panelDetalles.setBackground(Color.WHITE);
         add(panelDetalles, BorderLayout.CENTER);
@@ -78,124 +85,252 @@ public class FrmCrearPedidoProgramado extends JFrame {
         gbc.insets = new Insets(10, 10, 10, 10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        lblNombre = new JLabel("Nombre: ");
+        lblNombre = new JLabel("Nombre:");
         lblNombre.setFont(new Font("Arial", Font.BOLD, 20));
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
+
+        lblPrecio = new JLabel("Precio:");
+        lblPrecio.setFont(new Font("Arial", Font.PLAIN, 18));
+
+        lblDescripcion = new JLabel("Descripción:");
+        lblDescripcion.setFont(new Font("Arial", Font.PLAIN, 16));
+
+        gbc.gridx = 0; gbc.gridy = 0; gbc.gridwidth = 2;
         panelDetalles.add(lblNombre, gbc);
 
-        lblPrecio = new JLabel("Precio: ");
-        lblPrecio.setFont(new Font("Arial", Font.PLAIN, 18));
         gbc.gridy = 1;
         panelDetalles.add(lblPrecio, gbc);
 
-        lblDescripcion = new JLabel("<html>Descripción: </html>");
-        lblDescripcion.setFont(new Font("Arial", Font.PLAIN, 16));
         gbc.gridy = 2;
         panelDetalles.add(lblDescripcion, gbc);
 
-        JLabel lblCantidad = new JLabel("Cantidad:");
-        lblCantidad.setFont(new Font("Arial", Font.PLAIN, 16));
-        gbc.gridy = 3;
         gbc.gridwidth = 1;
-        panelDetalles.add(lblCantidad, gbc);
+
+        gbc.gridy = 3; gbc.gridx = 0;
+        panelDetalles.add(new JLabel("Cantidad:"), gbc);
 
         txtCantidad = new JTextField("1");
         gbc.gridx = 1;
         panelDetalles.add(txtCantidad, gbc);
 
-        JLabel lblNota = new JLabel("Nota:");
-        lblNota.setFont(new Font("Arial", Font.PLAIN, 16));
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        panelDetalles.add(lblNota, gbc);
+        gbc.gridy = 4; gbc.gridx = 0;
+        panelDetalles.add(new JLabel("Nota:"), gbc);
 
         txtNota = new JTextArea(3, 20);
         txtNota.setLineWrap(true);
         txtNota.setWrapStyleWord(true);
-        JScrollPane scrollNota = new JScrollPane(txtNota);
         gbc.gridx = 1;
-        panelDetalles.add(scrollNota, gbc);
+        panelDetalles.add(new JScrollPane(txtNota), gbc);
 
-        JLabel lblCupon = new JLabel("Código de cupón:");
-        lblCupon.setFont(new Font("Arial", Font.PLAIN, 16));
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        panelDetalles.add(lblCupon, gbc);
+        gbc.gridy = 5; gbc.gridx = 0;
+        panelDetalles.add(new JLabel("Código cupón:"), gbc);
 
         txtCupon = new JTextField();
         gbc.gridx = 1;
         panelDetalles.add(txtCupon, gbc);
 
         btnAgregar = new JButton("Agregar al pedido");
-        btnAgregar.setBackground(new Color(0, 123, 255));
-        btnAgregar.setForeground(Color.WHITE);
-        btnAgregar.setFocusPainted(false);
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        panelDetalles.add(btnAgregar, gbc);
-       
-
         btnFinalizar = new JButton("Finalizar pedido");
+        btnVolver = new JButton("Volver al menú");
+
+        btnAgregar.setBackground(new Color(63, 81, 181));
+        btnAgregar.setForeground(Color.WHITE);
+
         btnFinalizar.setBackground(new Color(40, 167, 69));
         btnFinalizar.setForeground(Color.WHITE);
-        btnFinalizar.setFocusPainted(false);
+
+        gbc.gridy = 6; gbc.gridx = 0;
+        panelDetalles.add(btnAgregar, gbc);
+
         gbc.gridx = 1;
         panelDetalles.add(btnFinalizar, gbc);
 
+        gbc.gridy = 7; gbc.gridx = 0; gbc.gridwidth = 2;
+        panelDetalles.add(btnVolver, gbc);
+
         listaDetalles = new JList<>(modeloLista);
         listaDetalles.setBorder(BorderFactory.createTitledBorder("Detalles del pedido"));
-        listaDetalles.setVisibleRowCount(10);
-        JScrollPane scrollLista = new JScrollPane(listaDetalles);
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        gbc.gridwidth = 2;
-        gbc.fill = GridBagConstraints.BOTH;
-        gbc.weightx = 1;
+        gbc.gridy = 8;
         gbc.weighty = 1;
-        panelDetalles.add(scrollLista, gbc);
+        gbc.fill = GridBagConstraints.BOTH;
+        panelDetalles.add(new JScrollPane(listaDetalles), gbc);
 
         btnAgregar.addActionListener(e -> agregarDetalle());
-        btnFinalizar.addActionListener(e -> finalizarPedido());
+        btnFinalizar.addActionListener(e -> mostrarResumen());
+        btnVolver.addActionListener(e -> volverAlMenu());
     }
 
-    private void cargarProductos() throws NegocioException {
+    private void mostrarResumen() {
+
+    if (detallesPedido.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Agrega al menos un producto");
+        return;
+    }
+
+    double subtotal = calcularSubtotal();
+    double descuento = 0;
+    double total = subtotal;
+
+    try {
+
+        if (!esExpress) {
+            descuento = pedidoBO.calcularDescuento(txtCupon.getText(), subtotal);
+            total = subtotal - descuento;
+        }
+
+        final double sub = subtotal;
+        final double desc = descuento;
+        final double tot = total;
+
+        JDialog dialogo = new JDialog(this, "Confirmar Pedido", true);
+        dialogo.setSize(400, 300);
+        dialogo.setLocationRelativeTo(this);
+        dialogo.setLayout(new BorderLayout());
+
+        JTextArea resumen = new JTextArea(
+                "Subtotal: $" + sub +
+                "\nDescuento: $" + desc +
+                "\nTotal: $" + tot +
+                "\n\n¿Confirmar pedido?"
+        );
+        resumen.setEditable(false);
+
+        JButton confirmar = new JButton("Confirmar");
+        JButton cancelar = new JButton("Cancelar");
+
+        confirmar.addActionListener(e -> {
+            dialogo.dispose();
+            registrarPedido(sub, desc, tot);
+        });
+
+        cancelar.addActionListener(e -> dialogo.dispose());
+
+        JPanel botones = new JPanel();
+        botones.add(confirmar);
+        botones.add(cancelar);
+
+        dialogo.add(resumen, BorderLayout.CENTER);
+        dialogo.add(botones, BorderLayout.SOUTH);
+
+        dialogo.setVisible(true);
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, e.getMessage());
+    }
+}
+
+   private void registrarPedido(double subtotal, double descuento, double total) {
+
+    try {
+
+        UsuarioDTO usuario = Sesion.getUsuarioActual();
+
+        if (esExpress) {
+
+            PedidoExpressDTO dto = new PedidoExpressDTO();
+            dto.setSubtotal(subtotal);
+            dto.setTotal(total);
+            dto.setDetalles(detallesPedido);
+
+            PedidoExpressDTO r = pedidoExpressBO.registrarPedido(dto);
+
+            JOptionPane.showMessageDialog(this,
+                    "Pedido creado\nFolio: " + r.getFolio()
+                            + "\nPIN: " + r.getPin());
+
+        } else {
+
+            PedidoProgramadoDTO dto =
+                    new PedidoProgramadoDTO(
+                            usuario.getId(),
+                            1,
+                            subtotal,
+                            descuento,
+                            total,
+                            txtCupon.getText(),
+                            detallesPedido
+                    );
+
+            pedidoBO.registrarPedido(dto);
+
+            JOptionPane.showMessageDialog(this,
+                    "Pedido Programado creado correctamente");
+        }
+
+        limpiarFormulario();
+
+    } catch (NegocioException ex) {
+
+        JOptionPane.showMessageDialog(this,
+                ex.getMessage(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+    }
+}
+
+    private void volverAlMenu() {
+        dispose();
+        if (Sesion.getUsuarioActual() == null) {
+            new FrmLogin(usuarioBO, productoBO, pedidoExpressBO, pedidoBO).setVisible(true);
+        } else {
+            new FrmMenuCliente(usuarioBO, productoBO, pedidoExpressBO, pedidoBO).setVisible(true);
+        }
+    }
+
+    private void agregarDetalle() {
+        if (productoSeleccionado == null) {
+            JOptionPane.showMessageDialog(this, "Seleccione un producto primero");
+            return;
+        }
+
+        int cantidad = Integer.parseInt(txtCantidad.getText());
+
+        DetallePedidoDTO detalle = new DetallePedidoDTO(
+                productoSeleccionado.getIdProducto(),
+                cantidad,
+                productoSeleccionado.getPrecio(),
+                txtNota.getText()
+        );
+
+        detallesPedido.add(detalle);
+        modeloLista.addElement(productoSeleccionado.getNombre() + " x" + cantidad);
+    }
+
+    private double calcularSubtotal() {
+        double subtotal = 0;
+        for (DetallePedidoDTO d : detallesPedido) {
+            subtotal += d.getCantidad() * d.getPrecioUnitario();
+        }
+        return subtotal;
+    }
+
+    private void limpiarFormulario() {
+        detallesPedido.clear();
+        modeloLista.clear();
+        txtCantidad.setText("1");
+        txtNota.setText("");
+        txtCupon.setText("");
+    }
+
+    private void cargarProductosSeguro() {
         try {
             productos = productoBO.obtenerDisponibles();
             panelProductos.removeAll();
 
             for (ProductoDTO p : productos) {
-                JPanel tarjeta = new JPanel();
-                tarjeta.setLayout(new BorderLayout());
-                tarjeta.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1));
-                tarjeta.setMaximumSize(new Dimension(420, 80));
-                tarjeta.setBackground(new Color(245, 245, 245));
-                tarjeta.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-                JLabel lblTitulo = new JLabel("<html><b>" + p.getNombre() + "</b></html>");
-                lblTitulo.setBorder(new EmptyBorder(5, 5, 5, 5));
+                JPanel tarjeta = new JPanel(new BorderLayout());
+                tarjeta.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+                tarjeta.setMaximumSize(new Dimension(420, 60));
 
-                JLabel lblPrecioProd = new JLabel("Precio: $" + p.getPrecio());
-                lblPrecioProd.setBorder(new EmptyBorder(0, 5, 5, 5));
-
-                tarjeta.add(lblTitulo, BorderLayout.NORTH);
-                tarjeta.add(lblPrecioProd, BorderLayout.SOUTH);
+                JLabel lbl = new JLabel(p.getNombre() + " - $" + p.getPrecio());
+                tarjeta.add(lbl, BorderLayout.CENTER);
 
                 tarjeta.addMouseListener(new MouseAdapter() {
-                    @Override
-                    public void mouseEntered(MouseEvent e) {
-                        tarjeta.setBackground(new Color(220, 220, 220));
-                    }
-
-                    @Override
-                    public void mouseExited(MouseEvent e) {
-                        tarjeta.setBackground(new Color(245, 245, 245));
-                    }
-
-                    @Override
                     public void mouseClicked(MouseEvent e) {
-                        mostrarDetallesProducto(p);
+                        productoSeleccionado = p;
+                        lblNombre.setText("Nombre: " + p.getNombre());
+                        lblPrecio.setText("Precio: $" + p.getPrecio());
+                        lblDescripcion.setText("Descripción: " + p.getDescripcion());
                     }
                 });
 
@@ -206,219 +341,8 @@ public class FrmCrearPedidoProgramado extends JFrame {
             panelProductos.revalidate();
             panelProductos.repaint();
 
-        } catch (NegocioException e) {
-            JOptionPane.showMessageDialog(this, "No se pudieron cargar los productos:\n" + e.getMessage(),
-                    "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
         }
     }
-
-    private void mostrarDetallesProducto(ProductoDTO p) {
-        productoSeleccionado = p;
-        lblNombre.setText("Nombre: " + p.getNombre());
-        lblPrecio.setText("Precio: $" + p.getPrecio());
-        lblDescripcion.setText("<html>Descripción: " + (p.getDescripcion() != null ? p.getDescripcion() : "Sin descripción") + "</html>");
-        txtCantidad.setText("1");
-        txtNota.setText("");
-        txtCupon.setText("");
-    }
-
-    private void agregarDetalle() {
-        if (productoSeleccionado == null) {
-            JOptionPane.showMessageDialog(this, "Seleccione un producto primero");
-            return;
-        }
-
-        try {
-            int cantidad = Integer.parseInt(txtCantidad.getText());
-            if (cantidad <= 0) throw new NumberFormatException();
-
-            String nota = txtNota.getText();
-
-            DetallePedidoDTO detalle = new DetallePedidoDTO(
-                    productoSeleccionado.getIdProducto(),
-                    cantidad,
-                    productoSeleccionado.getPrecio(),
-                    nota
-            );
-
-            detallesPedido.add(detalle);
-            modeloLista.addElement(productoSeleccionado.getNombre() + " x" + cantidad + (nota.isBlank() ? "" : " [" + nota + "]"));
-
-            JOptionPane.showMessageDialog(this,
-        "Producto agregado correctamente",
-        "Éxito",
-        JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Cantidad inválida");
-        }
-    }
-
-    private void finalizarPedido() {
-
-    if (detallesPedido.isEmpty()) {
-        JOptionPane.showMessageDialog(this,
-                "Agrega al menos un producto al pedido");
-        return;
-    }
-
-    double subtotal = calcularSubtotal();
-    String codigoCupon = txtCupon.getText().trim();
-
-    try {
-
-        //  negocio valida y calcula descuento real
-        double descuento = pedidoBO.calcularDescuento(codigoCupon, subtotal);
-        double total = subtotal - descuento;
-
-        mostrarResumenPedido(subtotal, descuento, total);
-
-    } catch (NegocioException ex) {
-        JOptionPane.showMessageDialog(this,
-                ex.getMessage(),
-                "Cupón inválido",
-                JOptionPane.ERROR_MESSAGE);
-    }
-}
-     private void mostrarResumenPedido(double subtotal, double descuento, double total) {
-
-    JDialog dialogo = new JDialog(this, "Confirmar Pedido", true);
-    dialogo.setSize(420, 520);
-    dialogo.setLocationRelativeTo(this);
-    dialogo.setLayout(new BorderLayout());
-    dialogo.getContentPane().setBackground(Color.WHITE);
-
-    JPanel panelContenido = new JPanel();
-    panelContenido.setLayout(new BoxLayout(panelContenido, BoxLayout.Y_AXIS));
-    panelContenido.setBorder(new EmptyBorder(15, 20, 15, 20));
-    panelContenido.setBackground(Color.WHITE);
-
-    JLabel titulo = new JLabel("Resumen del Pedido");
-    titulo.setFont(new Font("Arial", Font.BOLD, 20));
-    titulo.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-    panelContenido.add(titulo);
-    panelContenido.add(Box.createVerticalStrut(15));
-
-    for (DetallePedidoDTO d : detallesPedido) {
-
-        String nombre = productos.stream()
-                .filter(p -> p.getIdProducto() == d.getIdProducto())
-                .findFirst()
-                .map(ProductoDTO::getNombre)
-                .orElse("Producto");
-
-        JLabel lblProducto = new JLabel(
-                nombre + "  x" + d.getCantidad() +
-                "   $" + String.format("%.2f", d.getCantidad() * d.getPrecioUnitario())
-        );
-
-        lblProducto.setFont(new Font("Arial", Font.PLAIN, 14));
-        panelContenido.add(lblProducto);
-    }
-
-    panelContenido.add(Box.createVerticalStrut(15));
-    panelContenido.add(new JSeparator());
-    panelContenido.add(Box.createVerticalStrut(10));
-
-    panelContenido.add(new JLabel("Subtotal: $" + String.format("%.2f", subtotal)));
-    panelContenido.add(new JLabel("Descuento: $" + String.format("%.2f", descuento)));
-
-    JLabel lblTotal = new JLabel("TOTAL: $" + String.format("%.2f", total));
-    lblTotal.setFont(new Font("Arial", Font.BOLD, 16));
-    lblTotal.setForeground(new Color(40, 167, 69));
-
-    panelContenido.add(Box.createVerticalStrut(10));
-    panelContenido.add(lblTotal);
-
-    JButton btnConfirmar = crearBoton("Confirmar Pedido", new Color(40, 167, 69));
-    JButton btnCancelar = crearBoton("Cancelar", new Color(220, 53, 69));
-
-    JPanel panelBotones = new JPanel();
-    panelBotones.setBackground(Color.WHITE);
-    panelBotones.add(btnConfirmar);
-    panelBotones.add(btnCancelar);
-
-    btnConfirmar.addActionListener(e -> {
-        guardarPedidoEnBD(subtotal, descuento, total);
-        dialogo.dispose();
-    });
-
-    btnCancelar.addActionListener(e -> dialogo.dispose());
-
-    dialogo.add(panelContenido, BorderLayout.CENTER);
-    dialogo.add(panelBotones, BorderLayout.SOUTH);
-
-    dialogo.setVisible(true);
-}
-
-    private JButton crearBoton(String texto, Color color) {
-    JButton boton = new JButton(texto);
-    boton.setBackground(color);
-    boton.setForeground(Color.WHITE);
-    boton.setFocusPainted(false);
-    boton.setFont(new Font("Arial", Font.BOLD, 14));
-    boton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-    boton.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
-    return boton;
-  }
-     
-    private double calcularSubtotal() {
-    double subtotal = 0;
-
-    for (DetallePedidoDTO d : detallesPedido) {
-        subtotal += d.getCantidad() * d.getPrecioUnitario();
-    }
-
-    return subtotal;
-}
-
-  private void guardarPedidoEnBD(double subtotal, double descuento, double total) {
-
-    try {
-
-        String codigoCupon = txtCupon.getText().trim();
-
-        PedidoProgramadoDTO dto = new PedidoProgramadoDTO(
-                idCliente,
-                idEmpleado,
-                subtotal,
-                descuento,
-                total,
-                codigoCupon, 
-                detallesPedido
-        );
-
-        pedidoBO.registrarPedido(dto);
-
-        JOptionPane.showMessageDialog(this,
-        "Pedido creado exitosamente",
-        "Pedido Confirmado",
-        JOptionPane.INFORMATION_MESSAGE);
-
-        limpiarFormulario();
-
-    } catch (NegocioException ex) {
-        JOptionPane.showMessageDialog(this,
-                ex.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
-    }
-}
-private void limpiarFormulario() {
-
-    detallesPedido.clear();
-    modeloLista.clear();
-
-    txtCupon.setText("");
-    txtCantidad.setText("1");
-    txtNota.setText("");
-
-    lblNombre.setText("Nombre:");
-    lblPrecio.setText("Precio:");
-    lblDescripcion.setText("Descripción:");
-
-    productoSeleccionado = null;
-}
-
 }
