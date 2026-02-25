@@ -17,6 +17,7 @@ import persistencia.excepciones.PersistenciaException;
 /**
  *
  * @author ERICK
+ * @autor Ed
  */
 public class ClienteDAO implements IClienteDAO {
 
@@ -27,8 +28,7 @@ public class ClienteDAO implements IClienteDAO {
     }
 
     @Override
-    public void insertar(Cliente cliente)
-            throws PersistenciaException {
+    public void insertar(Cliente cliente) throws PersistenciaException {
 
         String sqlCliente = """
             INSERT INTO CLIENTE
@@ -37,41 +37,39 @@ public class ClienteDAO implements IClienteDAO {
         """;
 
         String sqlTelefono = """
-            INSERT INTO TELEFONO_CLIENTE
-            (id_cliente, numero)
-            VALUES (?, ?)
+            INSERT INTO TELEFONO
+            (numero, etiqueta, id_cliente)
+            VALUES (?, ?, ?)
         """;
 
         Connection con = null;
 
         try {
-
             con = conexion.crearConexion();
             con.setAutoCommit(false);
 
-            try (PreparedStatement ps =
-                    con.prepareStatement(sqlCliente)) {
+            // Insertar cliente
+            try (PreparedStatement ps = con.prepareStatement(sqlCliente)) {
 
                 ps.setInt(1, cliente.getIdCliente());
                 ps.setString(2, cliente.getNombreCompleto());
-                ps.setDate(3,
-                        java.sql.Date.valueOf(
-                                cliente.getFechaNacimiento()));
+                ps.setDate(3, java.sql.Date.valueOf(cliente.getFechaNacimiento()));
                 ps.setString(4, cliente.getCalle());
                 ps.setString(5, cliente.getColonia());
 
                 ps.executeUpdate();
             }
 
+            // Insertar teléfonos
             if (cliente.getTelefonos() != null) {
 
                 for (String telefono : cliente.getTelefonos()) {
 
-                    try (PreparedStatement psTel =
-                            con.prepareStatement(sqlTelefono)) {
+                    try (PreparedStatement psTel = con.prepareStatement(sqlTelefono)) {
 
-                        psTel.setInt(1, cliente.getIdCliente());
-                        psTel.setString(2, telefono);
+                        psTel.setString(1, telefono);
+                        psTel.setString(2, "Principal"); // etiqueta por defecto
+                        psTel.setInt(3, cliente.getIdCliente());
 
                         psTel.executeUpdate();
                     }
@@ -86,8 +84,7 @@ public class ClienteDAO implements IClienteDAO {
                 try { con.rollback(); } catch (SQLException ex) { }
             }
 
-            throw new PersistenciaException(
-                    "Error al insertar cliente", e);
+            throw new PersistenciaException("Error al insertar cliente", e);
 
         } finally {
 
@@ -110,30 +107,27 @@ public class ClienteDAO implements IClienteDAO {
         """;
 
         String sqlEliminarTelefonos = """
-            DELETE FROM TELEFONO_CLIENTE
+            DELETE FROM TELEFONO
             WHERE id_cliente = ?
         """;
 
         String sqlInsertarTelefono = """
-            INSERT INTO TELEFONO_CLIENTE
-            (id_cliente, numero)
-            VALUES (?, ?)
+            INSERT INTO TELEFONO
+            (numero, etiqueta, id_cliente)
+            VALUES (?, ?, ?)
         """;
 
         Connection con = null;
 
         try {
-
             con = conexion.crearConexion();
             con.setAutoCommit(false);
 
-            try (PreparedStatement ps =
-                    con.prepareStatement(sqlCliente)) {
+            // Actualizar datos del cliente
+            try (PreparedStatement ps = con.prepareStatement(sqlCliente)) {
 
                 ps.setString(1, cliente.getNombreCompleto());
-                ps.setDate(2,
-                        java.sql.Date.valueOf(
-                                cliente.getFechaNacimiento()));
+                ps.setDate(2, java.sql.Date.valueOf(cliente.getFechaNacimiento()));
                 ps.setString(3, cliente.getCalle());
                 ps.setString(4, cliente.getColonia());
                 ps.setInt(5, cliente.getIdCliente());
@@ -141,22 +135,24 @@ public class ClienteDAO implements IClienteDAO {
                 ps.executeUpdate();
             }
 
-            try (PreparedStatement psDel =
-                    con.prepareStatement(sqlEliminarTelefonos)) {
+            // Eliminar teléfonos anteriores
+            try (PreparedStatement psDel = con.prepareStatement(sqlEliminarTelefonos)) {
 
                 psDel.setInt(1, cliente.getIdCliente());
                 psDel.executeUpdate();
             }
 
+            // Insertar teléfonos nuevos
             if (cliente.getTelefonos() != null) {
 
                 for (String telefono : cliente.getTelefonos()) {
 
-                    try (PreparedStatement psTel =
-                            con.prepareStatement(sqlInsertarTelefono)) {
+                    try (PreparedStatement psTel = con.prepareStatement(sqlInsertarTelefono)) {
 
-                        psTel.setInt(1, cliente.getIdCliente());
-                        psTel.setString(2, telefono);
+                        psTel.setString(1, telefono);
+                        psTel.setString(2, "Principal");
+                        psTel.setInt(3, cliente.getIdCliente());
+
                         psTel.executeUpdate();
                     }
                 }
@@ -170,8 +166,7 @@ public class ClienteDAO implements IClienteDAO {
                 try { con.rollback(); } catch (SQLException ex) { }
             }
 
-            throw new PersistenciaException(
-                    "Error al actualizar cliente", e);
+            throw new PersistenciaException("Error al actualizar cliente", e);
 
         } finally {
 
@@ -182,8 +177,7 @@ public class ClienteDAO implements IClienteDAO {
     }
 
     @Override
-    public Cliente buscarPorId(int idCliente)
-            throws PersistenciaException {
+    public Cliente buscarPorId(int idCliente) throws PersistenciaException {
 
         String sqlCliente = """
             SELECT id_cliente,
@@ -197,13 +191,12 @@ public class ClienteDAO implements IClienteDAO {
 
         String sqlTelefonos = """
             SELECT numero
-            FROM TELEFONO_CLIENTE
+            FROM TELEFONO
             WHERE id_cliente = ?
         """;
 
         try (Connection con = conexion.crearConexion();
-             PreparedStatement ps =
-                     con.prepareStatement(sqlCliente)) {
+             PreparedStatement ps = con.prepareStatement(sqlCliente)) {
 
             ps.setInt(1, idCliente);
 
@@ -215,32 +208,23 @@ public class ClienteDAO implements IClienteDAO {
 
                 Cliente cliente = new Cliente();
 
-                cliente.setIdCliente(
-                        rs.getInt("id_cliente"));
-                cliente.setNombreCompleto(
-                        rs.getString("nombre_completo"));
+                cliente.setIdCliente(rs.getInt("id_cliente"));
+                cliente.setNombreCompleto(rs.getString("nombre_completo"));
                 cliente.setFechaNacimiento(
-                        rs.getDate("fecha_nacimiento")
-                          .toLocalDate());
-                cliente.setCalle(
-                        rs.getString("calle"));
-                cliente.setColonia(
-                        rs.getString("colonia"));
+                        rs.getDate("fecha_nacimiento").toLocalDate());
+                cliente.setCalle(rs.getString("calle"));
+                cliente.setColonia(rs.getString("colonia"));
 
-                List<String> telefonos =
-                        new ArrayList<>();
+                List<String> telefonos = new ArrayList<>();
 
-                try (PreparedStatement psTel =
-                        con.prepareStatement(sqlTelefonos)) {
+                try (PreparedStatement psTel = con.prepareStatement(sqlTelefonos)) {
 
                     psTel.setInt(1, idCliente);
 
-                    try (ResultSet rsTel =
-                            psTel.executeQuery()) {
+                    try (ResultSet rsTel = psTel.executeQuery()) {
 
                         while (rsTel.next()) {
-                            telefonos.add(
-                                    rsTel.getString("numero"));
+                            telefonos.add(rsTel.getString("numero"));
                         }
                     }
                 }
@@ -251,8 +235,7 @@ public class ClienteDAO implements IClienteDAO {
             }
 
         } catch (SQLException e) {
-            throw new PersistenciaException(
-                    "Error al buscar cliente", e);
+            throw new PersistenciaException("Error al buscar cliente", e);
         }
     }
 }

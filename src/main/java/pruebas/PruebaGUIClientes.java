@@ -5,6 +5,8 @@
 package pruebas;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.List;
 import javax.swing.SwingUtilities;
 import negocio.BOs.ClienteBO;
 import negocio.BOs.IClienteBO;
@@ -16,7 +18,7 @@ import persistencia.DAOs.UsuarioDAO;
 import persistencia.conexion.ConexionBD;
 import persistencia.conexion.IConexionBD;
 import persistencia.dominio.Cliente;
-import presentacion.FrmGestionClientes;
+
 
 /**
  *
@@ -25,17 +27,30 @@ import presentacion.FrmGestionClientes;
 
 public class PruebaGUIClientes {
 
-    public static void main(String[] args) {
-
+  public static void main(String[] args) {
+    try {
         IConexionBD conexion = new ConexionBD();
 
-        IClienteDAO clienteDAO = new ClienteDAO(conexion);
         IUsuarioDAO usuarioDAO = new UsuarioDAO(conexion);
+        IClienteDAO clienteDAO = new ClienteDAO(conexion);
 
         IClienteBO clienteBO = new ClienteBO(clienteDAO, usuarioDAO);
 
-        SwingUtilities.invokeLater(() ->
-                new FrmGestionClientes(clienteBO).setVisible(true)
+        Cliente cliente = new Cliente(
+                "Juan Pablo2",
+                LocalDate.of(2002, 5, 10),
+                "Av. Siempre Viva",
+                "Centro",
+                List.of("5551234567", "5559876543")
         );
+
+        clienteBO.registrarCliente(cliente);
+
+        System.out.println("✅ Cliente insertado correctamente");
+
+    } catch (Exception e) {
+        e.printStackTrace();
     }
 }
+}
+
