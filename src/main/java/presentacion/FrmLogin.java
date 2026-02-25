@@ -1,17 +1,17 @@
 package presentacion;
 
-import negocio.BOs.IUsuarioBO;
-import negocio.BOs.IProductoBO;
-import negocio.BOs.IPedidoExpressBO;
-import negocio.BOs.IPedidoProgramadoBO;
+import negocio.BOs.*;
 import negocio.DTOs.UsuarioDTO;
-import negocio.BOs.Sesion;
 import negocio.excepciones.NegocioException;
-
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 public class FrmLogin extends JFrame {
+
+    private final Color ACCENT_COLOR = new Color(63, 81, 181);
+    private final Color BG_COLOR = new Color(245, 247, 250);
+    private final Color TEXT_COLOR = new Color(70, 70, 70);
 
     private final IUsuarioBO usuarioBO;
     private final IProductoBO productoBO;
@@ -31,128 +31,122 @@ public class FrmLogin extends JFrame {
         this.pedidoExpressBO = pedidoExpressBO;
         this.pedidoProgramadoBO = pedidoProgramadoBO;
 
-        inicializar();
+        configurarVentana();
+        inicializarComponentes();
     }
 
-    private void inicializar() {
-
-        setTitle("Iniciar Sesión - Sistema Panadería");
-        setSize(400, 350);
-        setLocationRelativeTo(null);
+    private void configurarVentana() {
+        setTitle("Pansito - Acceso");
+        setSize(380, 520); // Tamaño más ajustado
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLayout(new BorderLayout());
+        setLocationRelativeTo(null);
+        getContentPane().setBackground(BG_COLOR);
+    }
 
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
-        panel.setBackground(Color.WHITE);
-
+    private void inicializarComponentes() {
+        setLayout(new GridBagLayout());
+        
+        JPanel container = new JPanel(new GridBagLayout());
+        container.setOpaque(false);
+        container.setBorder(new EmptyBorder(10, 40, 10, 40));
+        
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10,10,10,10);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        // Título
-        gbc.gridx = 0; 
-        gbc.gridy = 0; 
-        gbc.gridwidth = 2;
-
-        JLabel titulo = new JLabel("INICIAR SESIÓN");
-        titulo.setFont(new Font("Arial", Font.BOLD, 22));
-        titulo.setHorizontalAlignment(SwingConstants.CENTER);
-        panel.add(titulo, gbc);
-
-        gbc.gridwidth = 1;
-
-        // Usuario
-        gbc.gridy = 1; 
         gbc.gridx = 0;
-        panel.add(new JLabel("Usuario:"), gbc);
+        gbc.weightx = 1.0;
+
+        JLabel lblTitulo = new JLabel("Inicio de sesión");
+        lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 26));
+        lblTitulo.setForeground(ACCENT_COLOR);
+        gbc.gridy = 0;
+        gbc.insets = new Insets(0, 0, 25, 0);
+        container.add(lblTitulo, gbc);
+        
+        JLabel lblUser = new JLabel("Usuario");
+        lblUser.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblUser.setForeground(TEXT_COLOR);
+        gbc.gridy = 1;
+        gbc.insets = new Insets(0, 0, 4, 0);
+        container.add(lblUser, gbc);
 
         txtUsuario = new JTextField();
-        gbc.gridx = 1;
-        panel.add(txtUsuario, gbc);
+        txtUsuario.setPreferredSize(new Dimension(0, 35));
+        gbc.gridy = 2;
+        gbc.insets = new Insets(0, 0, 15, 0);
+        container.add(txtUsuario, gbc);
 
-        // Password
-        gbc.gridy = 2; 
-        gbc.gridx = 0;
-        panel.add(new JLabel("Contraseña:"), gbc);
+        JLabel lblPass = new JLabel("Contraseña");
+        lblPass.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        lblPass.setForeground(TEXT_COLOR);
+        gbc.gridy = 3;
+        gbc.insets = new Insets(0, 0, 4, 0);
+        container.add(lblPass, gbc);
 
         txtPassword = new JPasswordField();
-        gbc.gridx = 1;
-        panel.add(txtPassword, gbc);
+        txtPassword.setPreferredSize(new Dimension(0, 35));
+        txtPassword.putClientProperty("JTextField.showRevealButton", true);
+        gbc.gridy = 4;
+        gbc.insets = new Insets(0, 0, 25, 0);
+        container.add(txtPassword, gbc);
 
-        // Botón login
-        JButton btnLogin = new JButton("Ingresar");
-        gbc.gridy = 3; 
-        gbc.gridx = 0; 
-        gbc.gridwidth = 2;
-        panel.add(btnLogin, gbc);
+        JButton btnLogin = new JButton("INGRESAR");
+        estilizarBoton(btnLogin, ACCENT_COLOR, Color.WHITE);
+        gbc.gridy = 5;
+        gbc.insets = new Insets(0, 0, 10, 0);
+        container.add(btnLogin, gbc);
 
-        // Botones inferiores
-        JButton btnVolver = new JButton("Volver");
-        gbc.gridy = 4; 
-        gbc.gridwidth = 1;
-        gbc.gridx = 0;
-        panel.add(btnVolver, gbc);
+        JButton btnExpress = new JButton("PEDIDO EXPRESS");
+        estilizarBoton(btnExpress, Color.WHITE, new Color(230, 81, 0));
+        btnExpress.setBorder(BorderFactory.createLineBorder(new Color(230, 81, 0), 1));
+        gbc.gridy = 6;
+        gbc.insets = new Insets(0, 0, 20, 0);
+        container.add(btnExpress, gbc);
 
-        JButton btnRegistrar = new JButton("Registrarse");
-        gbc.gridx = 1;
-        panel.add(btnRegistrar, gbc);
+        JSeparator sep = new JSeparator();
+        gbc.gridy = 7;
+        gbc.insets = new Insets(0, 0, 15, 0);
+        container.add(sep, gbc);
 
-        add(panel);
+        JButton btnRegistrar = new JButton("REGISTRARSE");
+        estilizarBoton(btnRegistrar, Color.WHITE, ACCENT_COLOR);
+        btnRegistrar.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
+        gbc.gridy = 8;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        container.add(btnRegistrar, gbc);
 
-        // Eventos
+        add(container);
+
         btnLogin.addActionListener(e -> iniciarSesion());
-
-        btnVolver.addActionListener(e -> {
+        btnExpress.addActionListener(e -> {
             dispose();
-            new FrmInicio(usuarioBO, productoBO, pedidoExpressBO, pedidoProgramadoBO)
-                    .setVisible(true);
+            new FrmPedidoExpress(productoBO, pedidoExpressBO).setVisible(true);
         });
-
         btnRegistrar.addActionListener(e -> {
-            JOptionPane.showMessageDialog(this,
-                    "Aquí irá el registro de cliente");
+            JOptionPane.showMessageDialog(this, "Abriendo registro...");
         });
+    }
+
+    private void estilizarBoton(JButton btn, Color bg, Color fg) {
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 12));
+        btn.setBackground(bg);
+        btn.setForeground(fg);
+        btn.setPreferredSize(new Dimension(0, 40));
+        btn.setFocusPainted(false);
+        btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
     }
 
     private void iniciarSesion() {
-
         try {
-
-            UsuarioDTO usuarioDTO =
-                    usuarioBO.autenticar(
-                            txtUsuario.getText(),
-                            new String(txtPassword.getPassword()));
-
-            Sesion.iniciarSesion(usuarioDTO);
-
+            UsuarioDTO u = usuarioBO.autenticar(txtUsuario.getText(), new String(txtPassword.getPassword()));
+            Sesion.iniciarSesion(u);
             dispose();
-
-if (usuarioDTO.getRol().equalsIgnoreCase("Empleado")) {
-
-    new FrmPanelEmpleado(
-            usuarioBO,
-            productoBO,
-            pedidoExpressBO,
-            pedidoProgramadoBO
-    ).setVisible(true);
-
-} else {
-
-    new FrmMenuCliente(
-            usuarioBO,
-            productoBO,
-            pedidoExpressBO,
-            pedidoProgramadoBO
-    ).setVisible(true);
-}
-
+            if (u.getRol().equalsIgnoreCase("Empleado")) {
+                new FrmPanelEmpleado(usuarioBO, productoBO, pedidoExpressBO, pedidoProgramadoBO).setVisible(true);
+            } else {
+                new FrmMenuCliente(usuarioBO, productoBO, pedidoExpressBO, pedidoProgramadoBO).setVisible(true);
+            }
         } catch (NegocioException ex) {
-
-            JOptionPane.showMessageDialog(this,
-                    ex.getMessage(),
-                    "Error",
-                    JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

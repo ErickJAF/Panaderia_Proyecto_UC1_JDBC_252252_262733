@@ -29,8 +29,21 @@ public class FrmGestionDeEntregas extends JFrame {
     private JTextField txtCliente, txtTelefono, txtFolio;
     private JSpinner spinnerFecha;
     private JButton btnCambiarEstado;
+    private JButton btnVolver;
 
-    public FrmGestionDeEntregas() {
+    private final IUsuarioBO usuarioBO;
+    private final IProductoBO productoBO;
+
+    public FrmGestionDeEntregas(IUsuarioBO usuarioBO,
+                                IProductoBO productoBO,
+                                IPedidoExpressBO pedidoExpressBO,
+                                IPedidoProgramadoBO pedidoProgramadoBO) {
+
+        this.usuarioBO = usuarioBO;
+        this.productoBO = productoBO;
+        this.pedidoExpressBO = pedidoExpressBO;
+        this.pedidoProgramadoBO = pedidoProgramadoBO;
+
         configurarVentana();
         inicializarBOs();
         inicializarComponentes();
@@ -39,11 +52,6 @@ public class FrmGestionDeEntregas extends JFrame {
     }
 
     private void configurarVentana() {
-        try {
-            UIManager.setLookAndFeel("com.formdev.flatlaf.FlatLightLaf");
-        } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | UnsupportedLookAndFeelException e) {
-            try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (ClassNotFoundException | IllegalAccessException | InstantiationException | UnsupportedLookAndFeelException ignored) {}
-        }
         setTitle("Dashboard de Entregas | Sistema de Gestión");
         setSize(1100, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -160,9 +168,36 @@ public class FrmGestionDeEntregas extends JFrame {
         btnCambiarEstado.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         panelDerecho.add(btnCambiarEstado, BorderLayout.SOUTH);
+        
+        JPanel panelSuperiorDerecho = new JPanel(new BorderLayout());
+        panelSuperiorDerecho.setOpaque(false);
+        panelSuperiorDerecho.add(lblTipoPedido, BorderLayout.WEST);
+        
+        btnVolver = new JButton("← Volver");
+        btnVolver.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        btnVolver.setBackground(Color.WHITE);
+        btnVolver.setForeground(ACCENT_COLOR);
+        btnVolver.setFocusPainted(false);
+        btnVolver.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btnVolver.setPreferredSize(new Dimension(120, 35));
+
+        panelSuperiorDerecho.add(btnVolver, BorderLayout.EAST);
+
+        panelDerecho.add(panelSuperiorDerecho, BorderLayout.NORTH);
+
+        btnVolver.addActionListener(e -> {
+            dispose();
+            new FrmPanelEmpleado(
+                    usuarioBO,
+                    productoBO,
+                    pedidoExpressBO,
+                    pedidoProgramadoBO
+            ).setVisible(true);
+        });
 
         split.setRightComponent(panelDerecho);
         btnCambiarEstado.addActionListener(e -> cambiarEstadoPedido());
+        
     }
     
     private void cargarPedidosTodos() {
