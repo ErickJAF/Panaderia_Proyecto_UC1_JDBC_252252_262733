@@ -41,6 +41,7 @@ public class PedidoProgramadoDTO {
         this.subtotal = subtotal;
         this.descuento = descuento;
         this.total = total;
+        this.total = total;
         this.codigoCupon = codigoCupon;
         this.detalles = detalles;
     }

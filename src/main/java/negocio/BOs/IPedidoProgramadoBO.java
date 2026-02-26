@@ -21,6 +21,7 @@ public interface IPedidoProgramadoBO {
     PedidoProgramado buscarPorId(int idPedido) throws NegocioException;
     PedidoProgramadoDTO buscarPorIdDTO(int idPedido) throws NegocioException;
     double calcularDescuento(String codigoCupon, double subtotal) throws NegocioException;
-    List<PedidoProgramadoDTO> obtenerHistorialCliente(int idCliente)
-        throws NegocioException;
+    List<PedidoProgramadoDTO> obtenerHistorialCliente(int idCliente) throws NegocioException;
+    void validarLimitePedidos(int idCliente) throws NegocioException;
+    void cancelarPedido(int idPedido) throws NegocioException;
 }

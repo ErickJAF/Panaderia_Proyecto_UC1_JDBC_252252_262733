@@ -262,17 +262,58 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
         }
     }
     @Override
-public List<PedidoProgramadoDTO> obtenerHistorialCliente(int idCliente)
-        throws NegocioException {
+    public List<PedidoProgramadoDTO> obtenerHistorialCliente(int idCliente)
+            throws NegocioException {
 
-    if (idCliente <= 0) {
-        throw new NegocioException("Cliente inválido");
-    }
+        if (idCliente <= 0) {
+            throw new NegocioException("Cliente inválido");
+        }
 
-    try {
-        return pedidoDAO.obtenerPorCliente(idCliente);
-    } catch (PersistenciaException e) {
-        throw new NegocioException("No se pudo obtener el historial", e);
+        try {
+            return pedidoDAO.obtenerPorCliente(idCliente);
+        } catch (PersistenciaException e) {
+            throw new NegocioException("No se pudo obtener el historial", e);
+        }
     }
-}
+    
+    @Override
+    public void validarLimitePedidos(int idCliente) throws NegocioException {
+        try {
+            int pedidosActivos = pedidoDAO.contarPedidosPorCliente(idCliente);
+
+            if (pedidosActivos >= 3) {
+                throw new NegocioException(
+                    "El cliente ya tiene el máximo de 3 pedidos pendientes o listos."
+                );
+            }
+
+        } catch (PersistenciaException e) {
+            throw new NegocioException(
+                "Error al validar el límite de pedidos del cliente.", e
+            );
+        }
+    }
+    
+    @Override
+    public void cancelarPedido(int idPedido) throws NegocioException {
+        try {
+            PedidoProgramado pedido = pedidoDAO.buscarPorId(idPedido);
+            if (pedido == null) {
+                throw new NegocioException("No se encontró el pedido con ID " + idPedido);
+            }
+
+            if (!"Pendiente".equalsIgnoreCase(pedido.getEstado())) {
+                throw new NegocioException(
+                    "Solo se pueden cancelar pedidos en estado PENDIENTE. Estado actual: " + pedido.getEstado()
+                );
+            }
+
+            pedidoDAO.actualizarEstado(idPedido, "Cancelado");
+
+            LOG.info("Pedido cancelado correctamente. ID: " + idPedido);
+
+        } catch (PersistenciaException e) {
+            throw new NegocioException("Error al cancelar el pedido: " + e.getMessage(), e);
+        }
+    }
 }
