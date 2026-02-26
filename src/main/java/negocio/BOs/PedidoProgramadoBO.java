@@ -17,6 +17,10 @@ import persistencia.dominio.Cupon;
 import persistencia.dominio.PedidoProgramado;
 import persistencia.excepciones.PersistenciaException;
 
+/**
+ * Clase que implementa la lógica de negocio relacionada con los Pedidos Programados.
+ * Se encarga de validar reglas de negocio, calcular totales y coordinar la persistencia.
+ */
 public class PedidoProgramadoBO implements IPedidoProgramadoBO {
 
     private final IDetallePedidoDAO detalleDAO;
@@ -26,6 +30,13 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
 
     private static final Logger LOG = Logger.getLogger(PedidoProgramadoBO.class.getName());
 
+    /**
+     * Constructor de la clase que inicializa las dependencias a los DAOs necesarios.
+     *
+     * @param pedidoDAO DAO para el manejo de persistencia de Pedidos Programados.
+     * @param detalleDAO DAO para el manejo de persistencia de los Detalles de Pedido.
+     * @param cuponDAO DAO para el manejo de persistencia de los Cupones.
+     */
     public PedidoProgramadoBO(IPedidoProgramadoDAO pedidoDAO,
                               IDetallePedidoDAO detalleDAO,
                               ICuponDAO cuponDAO) {
@@ -36,6 +47,13 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
         this.cuponBO = new CuponBO(cuponDAO);
     }
 
+    /**
+     * Registra un nuevo pedido programado realizando las validaciones de negocio correspondientes,
+     * como el cálculo de subtotales, validación de cupones y verificación de importes.
+     *
+     * @param dto El objeto {@link PedidoProgramadoDTO} con los datos del pedido a registrar.
+     * @throws NegocioException Si los datos son inválidos, el cupón no es aplicable o hay discrepancias en los cálculos.
+     */
     @Override
     public void registrarPedido(PedidoProgramadoDTO dto) throws NegocioException {
 
@@ -137,6 +155,13 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
         }
     }
 
+    /**
+     * Actualiza el estado de un pedido programado, validando que las transiciones de estado sean permitidas.
+     *
+     * @param idPedido Identificador del pedido a actualizar.
+     * @param nuevoEstado El nuevo estado al que transitará el pedido ("Listo", "Entregado", "Cancelado", "No Entregado").
+     * @throws NegocioException Si la transición de estado no es válida o si el pedido no es encontrado.
+     */
     @Override
     public void actualizarEstado(int idPedido, String nuevoEstado) throws NegocioException {
 
@@ -188,6 +213,13 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
         }
     }
 
+    /**
+     * Busca y recupera la entidad de dominio de un pedido programado a través de su identificador.
+     *
+     * @param idPedido Identificador único del pedido.
+     * @return El objeto {@link PedidoProgramado} correspondiente al ID proporcionado.
+     * @throws NegocioException Si el pedido no es encontrado o ocurre un error en la capa de persistencia.
+     */
     @Override
     public PedidoProgramado buscarPorId(int idPedido) throws NegocioException {
 
@@ -206,6 +238,13 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
         }
     }
 
+    /**
+     * Busca un pedido por su identificador y lo retorna encapsulado en un objeto DTO (Data Transfer Object).
+     *
+     * @param idPedido Identificador único del pedido a buscar.
+     * @return El objeto {@link PedidoProgramadoDTO} con la información del pedido.
+     * @throws NegocioException Si el ID es inválido, no se encuentra el pedido o hay problemas de persistencia.
+     */
     @Override
     public PedidoProgramadoDTO buscarPorIdDTO(int idPedido) throws NegocioException {
 
@@ -228,6 +267,14 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
         }
     }
 
+    /**
+     * Calcula el monto de descuento a aplicar sobre un subtotal basándose en el porcentaje de un cupón.
+     *
+     * @param codigoCupon El código del cupón a aplicar.
+     * @param subtotal El importe subtotal sobre el cual se calculará el descuento.
+     * @return El importe en formato double correspondiente al descuento calculado, o 0 si no hay cupón.
+     * @throws NegocioException Si el cupón no existe, está inactivo o ha expirado.
+     */
     @Override
     public double calcularDescuento(String codigoCupon, double subtotal) throws NegocioException {
 
@@ -261,6 +308,14 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
             throw new NegocioException("Error al consultar el cupón", ex);
         }
     }
+
+    /**
+     * Obtiene el historial completo de pedidos programados asociados a un cliente específico.
+     *
+     * @param idCliente El identificador del cliente a consultar.
+     * @return Una lista de objetos {@link PedidoProgramadoDTO} con el historial del cliente.
+     * @throws NegocioException Si el ID del cliente es inválido o falla la consulta en la persistencia.
+     */
     @Override
     public List<PedidoProgramadoDTO> obtenerHistorialCliente(int idCliente)
             throws NegocioException {
@@ -276,6 +331,12 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
         }
     }
     
+    /**
+     * Verifica que un cliente no exceda el límite máximo permitido de pedidos activos (Pendientes o Listos).
+     *
+     * @param idCliente El identificador del cliente a validar.
+     * @throws NegocioException Si el cliente ya alcanzó el límite de 3 pedidos activos.
+     */
     @Override
     public void validarLimitePedidos(int idCliente) throws NegocioException {
         try {
@@ -294,6 +355,12 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
         }
     }
     
+    /**
+     * Cancela un pedido programado en el sistema, siempre y cuando se encuentre en estado "Pendiente".
+     *
+     * @param idPedido El identificador del pedido a cancelar.
+     * @throws NegocioException Si el pedido no es encontrado, no está en estado Pendiente, o falla la actualización.
+     */
     @Override
     public void cancelarPedido(int idPedido) throws NegocioException {
         try {
