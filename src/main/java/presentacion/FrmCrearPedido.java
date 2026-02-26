@@ -26,7 +26,7 @@ public class FrmCrearPedido extends JFrame {
     private JLabel lblNombre, lblPrecio, lblDescripcion;
     private JTextField txtCantidad, txtCupon;
     private JTextArea txtNota;
-    private JButton btnAgregar, btnFinalizar, btnVolver;
+    private JButton btnAgregar, btnFinalizar, btnVolver, btnEliminar;
 
     private List<ProductoDTO> productos;
     private ProductoDTO productoSeleccionado;
@@ -68,14 +68,12 @@ public class FrmCrearPedido extends JFrame {
         setLayout(new BorderLayout());
         getContentPane().setBackground(new Color(240, 240, 240));
 
-        // PANEL PRODUCTOS
         panelProductos = new JPanel();
         panelProductos.setLayout(new BoxLayout(panelProductos, BoxLayout.Y_AXIS));
         JScrollPane scrollProductos = new JScrollPane(panelProductos);
         scrollProductos.setPreferredSize(new Dimension(450, 0));
         add(scrollProductos, BorderLayout.WEST);
 
-        // PANEL DETALLES
         panelDetalles = new JPanel(new GridBagLayout());
         panelDetalles.setBorder(BorderFactory.createTitledBorder("Detalle del Producto"));
         panelDetalles.setBackground(Color.WHITE);
@@ -131,12 +129,16 @@ public class FrmCrearPedido extends JFrame {
         btnAgregar = new JButton("Agregar al pedido");
         btnFinalizar = new JButton("Finalizar pedido");
         btnVolver = new JButton("Volver al menú");
+        btnEliminar = new JButton("Eliminar detalle");
 
         btnAgregar.setBackground(new Color(63, 81, 181));
         btnAgregar.setForeground(Color.WHITE);
 
         btnFinalizar.setBackground(new Color(40, 167, 69));
         btnFinalizar.setForeground(Color.WHITE);
+        
+        btnEliminar.setBackground(new Color(220, 53, 69));
+        btnEliminar.setForeground(Color.WHITE);
 
         gbc.gridy = 6; gbc.gridx = 0;
         panelDetalles.add(btnAgregar, gbc);
@@ -157,6 +159,14 @@ public class FrmCrearPedido extends JFrame {
         btnAgregar.addActionListener(e -> agregarDetalle());
         btnFinalizar.addActionListener(e -> mostrarResumen());
         btnVolver.addActionListener(e -> volverAlMenu());
+
+        gbc.gridy = 9;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        panelDetalles.add(btnEliminar, gbc);
+
+        btnEliminar.addActionListener(e -> eliminarDetalle());
     }
 
     private void mostrarResumen() {
@@ -345,6 +355,34 @@ public class FrmCrearPedido extends JFrame {
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, e.getMessage());
+        }
+    }
+    
+    private void eliminarDetalle() {
+
+        int indiceSeleccionado = listaDetalles.getSelectedIndex();
+
+        if (indiceSeleccionado == -1) {
+            JOptionPane.showMessageDialog(this, 
+                    "Selecciona un detalle para eliminar");
+            return;
+        }
+
+        int confirmacion = JOptionPane.showConfirmDialog(
+                this,
+                "¿Eliminar el producto seleccionado?",
+                "Confirmar",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if (confirmacion == JOptionPane.YES_OPTION) {
+
+            detallesPedido.remove(indiceSeleccionado);
+
+            modeloLista.remove(indiceSeleccionado);
+
+            JOptionPane.showMessageDialog(this,
+                    "Detalle eliminado correctamente");
         }
     }
 }
