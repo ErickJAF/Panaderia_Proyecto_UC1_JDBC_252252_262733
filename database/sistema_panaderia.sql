@@ -6,7 +6,8 @@ CREATE TABLE USUARIO (
     id_usuario INT AUTO_INCREMENT PRIMARY KEY,
     nombreUsuario VARCHAR(40) NOT NULL UNIQUE,
     rol ENUM('Cliente','Empleado') NOT NULL,
-    contrasena VARCHAR(64) NOT NULL
+    contrasena VARCHAR(64) NOT NULL,
+    activo BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 CREATE TABLE EMPLEADO (
@@ -135,9 +136,6 @@ VALUES
 ('5559876543', 'Trabajo', 3),
 ('5551112233', 'Personal', 4);
 
--- =========================
--- PRODUCTOS
--- =========================
 INSERT INTO PRODUCTO (nombre, tipo, descripcion, precio, disponible)
 VALUES
 ('Pan de Caja Integral', 'Panadería', 'Pan integral de 500g', 40.00, TRUE),
@@ -153,7 +151,7 @@ VALUES
 
 INSERT INTO CUPON (codigo, descuento, usos_maximos, usos_actuales, activo, fecha_inicio, fecha_fin)
 VALUES
-('DESC10', 10.00, 100, 0, TRUE, '2025-01-01', '2025-12-31');
+('DESC10', 10.00, 1, 0, TRUE, '2025-01-01', '2027-12-31');
 
 INSERT INTO PEDIDO (fecha_creacion, estado, subtotal, descuento, total, id_empleado)
 VALUES
@@ -303,4 +301,4 @@ END //
 
 DELIMITER ;
 
-alter table usuario add column activo boolean not null default true;
+SELECT * FROM CUPON;

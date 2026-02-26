@@ -63,7 +63,6 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
 
         try {
 
-            // ================= CUPÓN =================
             if (dto.getCodigoCupon() != null && !dto.getCodigoCupon().isBlank()) {
 
                 Cupon cupon = cuponDAO.buscarPorCodigo(dto.getCodigoCupon());
@@ -79,6 +78,10 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
                 if (cupon.getFechaFin().isBefore(LocalDate.now())) {
                     throw new NegocioException("El cupón está expirado");
                 }
+                
+                if (cupon.getUsosActuales() >= cupon.getUsosMaximos()) {
+                   throw new NegocioException("El cupón ya alcanzó su límite de usos.");
+               }
 
                 idCupon = cupon.getIdCupon();
 
@@ -90,9 +93,7 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
                         .divide(BigDecimal.valueOf(100));
 
                 descuentoCalculado = descuentoBD.doubleValue();
-            }
-
-            // ================= VALIDACIONES =================
+        }
 
             if (Math.abs(subtotalCalculado - dto.getSubtotal()) > 0.01) {
                 throw new NegocioException("El subtotal no coincide con el cálculo interno.");
@@ -107,8 +108,6 @@ public class PedidoProgramadoBO implements IPedidoProgramadoBO {
             if (Math.abs(totalCalculado - dto.getTotal()) > 0.01) {
                 throw new NegocioException("El total no coincide con el cálculo interno.");
             }
-
-            // ================= CREACIÓN DEL PEDIDO =================
 
             PedidoProgramado pedido = new PedidoProgramado();
             pedido.setFechaCreacion(LocalDate.now());
