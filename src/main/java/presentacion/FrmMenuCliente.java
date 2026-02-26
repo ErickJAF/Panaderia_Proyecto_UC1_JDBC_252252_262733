@@ -39,14 +39,13 @@ public class FrmMenuCliente extends JFrame {
     private void configurarVentana() {
         UsuarioDTO usuario = Sesion.getUsuarioActual();
         setTitle("Menú Cliente - " + (usuario != null ? usuario.getNombreUsuario() : ""));
-        setSize(380, 480);
+        setSize(380, 420);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         getContentPane().setBackground(BG_COLOR);
     }
 
     private void inicializarComponentes() {
-
         setLayout(new GridBagLayout());
 
         JPanel container = new JPanel(new GridBagLayout());
@@ -61,6 +60,7 @@ public class FrmMenuCliente extends JFrame {
         JLabel lblTitulo = new JLabel("Mi Cuenta");
         lblTitulo.setFont(new Font("Segoe UI", Font.BOLD, 26));
         lblTitulo.setForeground(ACCENT_COLOR);
+        lblTitulo.setHorizontalAlignment(SwingConstants.CENTER);
         gbc.gridy = 0;
         gbc.insets = new Insets(0, 0, 30, 0);
         container.add(lblTitulo, gbc);
@@ -71,18 +71,26 @@ public class FrmMenuCliente extends JFrame {
         container.add(btnCrearPedido, gbc);
 
         JButton btnHistorial = crearBotonRectangular("VER MI HISTORIAL", Color.WHITE, ACCENT_COLOR);
+        btnHistorial.setBorder(BorderFactory.createLineBorder(ACCENT_COLOR, 2));
         gbc.gridy = 2;
-        gbc.insets = new Insets(0, 0, 12, 0);
+        gbc.insets = new Insets(0, 0, 25, 0);
         container.add(btnHistorial, gbc);
 
-        JButton btnCerrarSesion = crearBotonRectangular("CERRAR SESIÓN", Color.WHITE, RED_COLOR);
+        JSeparator sep = new JSeparator();
         gbc.gridy = 3;
+        gbc.insets = new Insets(0, 0, 20, 0);
+        container.add(sep, gbc);
+
+        JButton btnCerrarSesion = crearBotonRectangular("CERRAR SESIÓN", Color.WHITE, RED_COLOR);
+        btnCerrarSesion.setBorder(BorderFactory.createLineBorder(RED_COLOR, 2));
+        gbc.gridy = 4;
+        gbc.insets = new Insets(0, 0, 0, 0);
         container.add(btnCerrarSesion, gbc);
 
-        add(container);
+        add(container, gbc);
 
-        // 🔹 CORREGIDO
         btnCrearPedido.addActionListener(e -> {
+            dispose();
             new FrmCrearPedido(
                     usuarioBO,
                     productoBO,
@@ -92,9 +100,15 @@ public class FrmMenuCliente extends JFrame {
             ).setVisible(true);
         });
 
-        btnHistorial.addActionListener(e ->
-                new FrmHistorialCliente(pedidoProgramadoBO).setVisible(true)
-        );
+        btnHistorial.addActionListener(e -> {
+            dispose();
+            new FrmHistorialCliente(
+                    usuarioBO, 
+                    productoBO, 
+                    pedidoExpressBO, 
+                    pedidoProgramadoBO
+            ).setVisible(true);
+        });
 
         btnCerrarSesion.addActionListener(e -> cerrarSesion());
     }
@@ -107,13 +121,18 @@ public class FrmMenuCliente extends JFrame {
         btn.setPreferredSize(new Dimension(0, 42));
         btn.setFocusPainted(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        btn.putClientProperty("JButton.buttonType", "square"); 
+        
+        if (bg.equals(Color.WHITE) && btn.getBorder() == null) {
+            btn.setBorder(BorderFactory.createLineBorder(fg, 2));
+        }
+        
         return btn;
     }
 
     private void cerrarSesion() {
         Sesion.cerrarSesion();
         dispose();
-        new FrmLogin(usuarioBO, productoBO, pedidoExpressBO, pedidoProgramadoBO)
-                .setVisible(true);
+        new FrmLogin(usuarioBO, productoBO, pedidoExpressBO, pedidoProgramadoBO).setVisible(true);
     }
 }
