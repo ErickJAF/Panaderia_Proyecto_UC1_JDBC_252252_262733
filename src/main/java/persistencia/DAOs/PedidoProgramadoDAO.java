@@ -351,32 +351,4 @@ public class PedidoProgramadoDAO implements IPedidoProgramadoDAO {
             throw new PersistenciaException("Error al obtener historial", e);
         }
     }
-    
-    @Override
-    public int contarPedidosPorCliente(int idCliente) throws PersistenciaException {
-        String sql = """
-            SELECT COUNT(*) AS total_pedidos
-            FROM PROGRAMADO pr
-            JOIN PEDIDO p ON pr.id_pedido = p.id_pedido
-            WHERE pr.id_cliente = ?
-            AND p.estado IN ('Pendiente', 'Listo');
-        """;
-
-        try (Connection conexion = conexionBD.crearConexion();
-             PreparedStatement ps = conexion.prepareStatement(sql)) {
-
-            ps.setInt(1, idCliente);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt("total_pedidos");
-                }
-            }
-
-            return 0;
-
-        } catch (SQLException e) {
-            throw new PersistenciaException("Error al contar pedidos pendientes o listos del cliente", e);
-        }
-    }
 }

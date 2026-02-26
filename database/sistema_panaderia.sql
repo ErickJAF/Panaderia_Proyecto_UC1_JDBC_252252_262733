@@ -151,7 +151,7 @@ VALUES
 
 INSERT INTO CUPON (codigo, descuento, usos_maximos, usos_actuales, activo, fecha_inicio, fecha_fin)
 VALUES
-('DESC10', 10.00, 50, 0, TRUE, '2025-01-01', '2027-12-31');
+('DESC10', 10.00, 1, 0, TRUE, '2025-01-01', '2027-12-31');
 
 INSERT INTO PEDIDO (fecha_creacion, estado, subtotal, descuento, total, id_empleado)
 VALUES
@@ -300,3 +300,5 @@ BEGIN
 END //
 
 DELIMITER ;
+
+SELECT * FROM CUPON;

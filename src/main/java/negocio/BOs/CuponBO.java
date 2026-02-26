@@ -4,31 +4,28 @@
  */
 package negocio.BOs;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.time.LocalDate;
 import negocio.excepciones.NegocioException;
 import persistencia.DAOs.ICuponDAO;
+import persistencia.dominio.Cupon;
 import persistencia.excepciones.PersistenciaException;
 
 /**
  *
  * @author josed
  */
-public class CuponBO implements ICuponBO{
+public class CuponBO {
 
-    private final ICuponDAO cuponDAO;
-    private static final Logger LOG = Logger.getLogger(PedidoBO.class.getName());
+    private ICuponDAO cuponDAO;
 
     public CuponBO(ICuponDAO cuponDAO) {
         this.cuponDAO = cuponDAO;
     }
 
-    @Override
     public void aplicarUso(Long idCupon) throws NegocioException {
         try {
             cuponDAO.incrementarUso(idCupon);
         } catch (PersistenciaException e) {
-            LOG.log(Level.SEVERE, "Error en incrementar los usos del pedido", e);
             throw new NegocioException("No se pudo actualizar el uso del cupón.", e);
         }
     }
