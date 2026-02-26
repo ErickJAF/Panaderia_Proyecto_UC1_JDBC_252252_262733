@@ -23,32 +23,32 @@ import persistencia.DAOs.UsuarioDAO;
 import persistencia.conexion.ConexionBD;
 import persistencia.conexion.IConexionBD;
 
-//import presentacion.FrmGestionCliente;
-//
-//public class PruebaGUIClientes {
-//
-//    public static void main(String[] args) {
-//
-//        SwingUtilities.invokeLater(() -> {
-//
-//            // Crear conexión
-//            IConexionBD conexion = new ConexionBD();
-//
-//            // Crear DAOs
-//            IClienteDAO clienteDAO = new ClienteDAO(conexion);
-//            IUsuarioDAO usuarioDAO = new UsuarioDAO(conexion);
-//
-//            // Crear BO
-//            ClienteBO clienteBO = 
-//                    new ClienteBO(clienteDAO, usuarioDAO);
-//
-//            // Inyectar BO en el Frame
-//            FrmGestionCliente frm =
-//                    new FrmGestionCliente(clienteBO);
-//
-//            frm.setLocationRelativeTo(null);
-//            frm.setVisible(true);
-//
-//        });
-//    }
-//}
+import presentacion.FrmGestionCliente;
+
+public class PruebaGUIClientes {
+
+    public static void main(String[] args) {
+
+        SwingUtilities.invokeLater(() -> {
+
+            // Crear conexión
+            IConexionBD conexion = new ConexionBD();
+
+            // Crear DAOs
+            IClienteDAO clienteDAO = new ClienteDAO(conexion);
+            IUsuarioDAO usuarioDAO = new UsuarioDAO(conexion);
+
+            // Crear BO
+            ClienteBO clienteBO = 
+                    new ClienteBO(clienteDAO, usuarioDAO);
+
+            // Inyectar BO en el Frame
+            FrmGestionCliente frm =
+                    new FrmGestionCliente(clienteBO);
+
+            frm.setLocationRelativeTo(null);
+            frm.setVisible(true);
+
+        });
+    }
+}

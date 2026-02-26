@@ -30,82 +30,69 @@ public class ClienteDAO implements IClienteDAO {
     @Override
     public void insertar(Cliente cliente) throws PersistenciaException {
 
-    String sqlMax = "SELECT IFNULL(MAX(id_cliente), 0) + 1 FROM CLIENTE";
+        String sqlCliente = """
+            INSERT INTO CLIENTE
+            (id_cliente, nombre_completo, fecha_nacimiento, calle, colonia)
+            VALUES (?, ?, ?, ?, ?)
+        """;
 
-    String sqlCliente = """
-        INSERT INTO CLIENTE
-        (id_cliente, nombre_completo, fecha_nacimiento, calle, colonia)
-        VALUES (?, ?, ?, ?, ?)
-    """;
+        String sqlTelefono = """
+            INSERT INTO TELEFONO
+            (numero, etiqueta, id_cliente)
+            VALUES (?, ?, ?)
+        """;
 
-    String sqlTelefono = """
-        INSERT INTO TELEFONO
-        (numero, etiqueta, id_cliente)
-        VALUES (?, ?, ?)
-    """;
+        Connection con = null;
 
-    Connection con = null;
+        try {
+            con = conexion.crearConexion();
+            con.setAutoCommit(false);
 
-    try {
-        con = conexion.crearConexion();
-        con.setAutoCommit(false);
+            // Insertar cliente
+            try (PreparedStatement ps = con.prepareStatement(sqlCliente)) {
 
-        int nuevoId;
+                ps.setInt(1, cliente.getIdCliente());
+                ps.setString(2, cliente.getNombreCompleto());
+                ps.setDate(3, java.sql.Date.valueOf(cliente.getFechaNacimiento()));
+                ps.setString(4, cliente.getCalle());
+                ps.setString(5, cliente.getColonia());
 
-        // Generar nuevo ID
-        try (PreparedStatement psMax = con.prepareStatement(sqlMax);
-             ResultSet rs = psMax.executeQuery()) {
+                ps.executeUpdate();
+            }
 
-            rs.next();
-            nuevoId = rs.getInt(1);
-        }
+            // Insertar teléfonos
+            if (cliente.getTelefonos() != null) {
 
-        // Insertar cliente
-        try (PreparedStatement ps = con.prepareStatement(sqlCliente)) {
+                for (String telefono : cliente.getTelefonos()) {
 
-            ps.setInt(1, nuevoId);
-            ps.setString(2, cliente.getNombreCompleto());
-            ps.setDate(3, java.sql.Date.valueOf(cliente.getFechaNacimiento()));
-            ps.setString(4, cliente.getCalle());
-            ps.setString(5, cliente.getColonia());
+                    try (PreparedStatement psTel = con.prepareStatement(sqlTelefono)) {
 
-            ps.executeUpdate();
-        }
+                        psTel.setString(1, telefono);
+                        psTel.setString(2, "Principal"); // etiqueta por defecto
+                        psTel.setInt(3, cliente.getIdCliente());
 
-        // Insertar teléfonos
-        if (cliente.getTelefonos() != null) {
-
-            for (String telefono : cliente.getTelefonos()) {
-
-                try (PreparedStatement psTel = con.prepareStatement(sqlTelefono)) {
-
-                    psTel.setString(1, telefono);
-                    psTel.setString(2, "Principal");
-                    psTel.setInt(3, nuevoId);
-
-                    psTel.executeUpdate();
+                        psTel.executeUpdate();
+                    }
                 }
             }
-        }
 
-        con.commit();
-       
+            con.commit();
 
-    } catch (SQLException e) {
+        } catch (SQLException e) {
 
-        if (con != null) {
-            try { con.rollback(); } catch (SQLException ex) {}
-        }
+            if (con != null) {
+                try { con.rollback(); } catch (SQLException ex) { }
+            }
 
-        throw new PersistenciaException("Error al insertar cliente", e);
+            throw new PersistenciaException("Error al insertar cliente", e);
 
-    } finally {
+        } finally {
 
-        if (con != null) {
-            try { con.close(); } catch (SQLException ex) {}
+            if (con != null) {
+                try { con.close(); } catch (SQLException ex) { }
+            }
         }
     }
-}
 
     @Override
     public void actualizar(Cliente cliente) throws PersistenciaException {
