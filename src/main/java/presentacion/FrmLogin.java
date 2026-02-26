@@ -95,7 +95,7 @@ public class FrmLogin extends JFrame {
         // 🔹 CORREGIDO
         btnExpress.addActionListener(e -> {
             dispose();
-            new FrmCrearPedidoProgramado(
+            new FrmCrearPedido(
                     usuarioBO,
                     productoBO,
                     pedidoProgramadoBO,

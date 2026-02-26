@@ -24,6 +24,6 @@ public interface IPedidoProgramadoDAO {
     void actualizarEstado(int idPedido, String estado) throws PersistenciaException;
     
     List<PedidoProgramado> obtenerPendientes() throws PersistenciaException;
-    List<PedidoProgramadoDTO> obtenerPorCliente(int idCliente)
-        throws PersistenciaException;
+    List<PedidoProgramadoDTO> obtenerPorCliente(int idCliente) throws PersistenciaException;
+    int contarPedidosPorCliente(int idCliente) throws PersistenciaException;
 }

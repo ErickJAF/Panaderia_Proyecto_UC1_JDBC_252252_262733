@@ -12,7 +12,7 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FrmCrearPedidoProgramado extends JFrame {
+public class FrmCrearPedido extends JFrame {
 
     private final IPedidoProgramadoBO pedidoBO;
     private final IPedidoExpressBO pedidoExpressBO;
@@ -35,7 +35,7 @@ public class FrmCrearPedidoProgramado extends JFrame {
     private final DefaultListModel<String> modeloLista = new DefaultListModel<>();
     private JList<String> listaDetalles;
 
-    public FrmCrearPedidoProgramado(
+    public FrmCrearPedido(
             IUsuarioBO usuarioBO,
             IProductoBO productoBO,
             IPedidoProgramadoBO pedidoProgramadoBO,
@@ -218,54 +218,56 @@ public class FrmCrearPedidoProgramado extends JFrame {
     }
 }
 
-   private void registrarPedido(double subtotal, double descuento, double total) {
+    private void registrarPedido(double subtotal, double descuento, double total) {
 
-    try {
+        try {
 
-        UsuarioDTO usuario = Sesion.getUsuarioActual();
+            UsuarioDTO usuario = Sesion.getUsuarioActual();
 
-        if (esExpress) {
+            if (esExpress) {
 
-            PedidoExpressDTO dto = new PedidoExpressDTO();
-            dto.setSubtotal(subtotal);
-            dto.setTotal(total);
-            dto.setDetalles(detallesPedido);
+                PedidoExpressDTO dto = new PedidoExpressDTO();
+                dto.setSubtotal(subtotal);
+                dto.setTotal(total);
+                dto.setDetalles(detallesPedido);
 
-            PedidoExpressDTO r = pedidoExpressBO.registrarPedido(dto);
+                PedidoExpressDTO r = pedidoExpressBO.registrarPedido(dto);
+
+                JOptionPane.showMessageDialog(this,
+                        "Pedido creado\nFolio: " + r.getFolio()
+                                + "\nPIN: " + r.getPin());
+
+            } else {
+
+                pedidoBO.validarLimitePedidos(usuario.getId());
+
+                PedidoProgramadoDTO dto =
+                        new PedidoProgramadoDTO(
+                                usuario.getId(),
+                                1,
+                                subtotal,
+                                descuento,
+                                total,
+                                txtCupon.getText(),
+                                detallesPedido
+                        );
+
+                pedidoBO.registrarPedido(dto);
+
+                JOptionPane.showMessageDialog(this,
+                        "Pedido Programado creado correctamente");
+            }
+
+            limpiarFormulario();
+
+        } catch (NegocioException ex) {
 
             JOptionPane.showMessageDialog(this,
-                    "Pedido creado\nFolio: " + r.getFolio()
-                            + "\nPIN: " + r.getPin());
-
-        } else {
-
-            PedidoProgramadoDTO dto =
-                    new PedidoProgramadoDTO(
-                            usuario.getId(),
-                            1,
-                            subtotal,
-                            descuento,
-                            total,
-                            txtCupon.getText(),
-                            detallesPedido
-                    );
-
-            pedidoBO.registrarPedido(dto);
-
-            JOptionPane.showMessageDialog(this,
-                    "Pedido Programado creado correctamente");
+                    ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
-
-        limpiarFormulario();
-
-    } catch (NegocioException ex) {
-
-        JOptionPane.showMessageDialog(this,
-                ex.getMessage(),
-                "Error",
-                JOptionPane.ERROR_MESSAGE);
     }
-}
 
     private void volverAlMenu() {
         dispose();

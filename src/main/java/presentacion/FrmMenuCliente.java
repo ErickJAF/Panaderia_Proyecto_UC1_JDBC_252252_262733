@@ -83,7 +83,7 @@ public class FrmMenuCliente extends JFrame {
 
         // 🔹 CORREGIDO
         btnCrearPedido.addActionListener(e -> {
-            new FrmCrearPedidoProgramado(
+            new FrmCrearPedido(
                     usuarioBO,
                     productoBO,
                     pedidoProgramadoBO,
