@@ -13,54 +13,90 @@ import persistencia.dominio.Cliente;
 import persistencia.excepciones.PersistenciaException;
 
 /**
+ * Clase de lógica de negocio encargada de gestionar las operaciones
+ * relacionadas con los clientes del sistema.
+ * <p>
+ * Esta clase valida la información antes de enviarla a la capa de persistencia,
+ * y controla las reglas de negocio asociadas al registro, actualización,
+ * búsqueda y desactivación de clientes.
+ * </p>
  *
  * @author ERICK
  */
 public class ClienteBO implements IClienteBO{
 
+    /**
+     * DAO encargado de las operaciones de persistencia de Cliente.
+     */
     private final IClienteDAO clienteDAO;
+
+    /**
+     * DAO encargado de las operaciones de persistencia de Usuario.
+     */
     private final IUsuarioDAO usuarioDAO;
 
+    /**
+     * Logger para el registro de eventos y seguimiento de operaciones.
+     */
     private static final Logger LOG =
             Logger.getLogger(ClienteBO.class.getName());
 
   
-    
+    /**
+     * Constructor que recibe las dependencias necesarias para la
+     * gestión de clientes.
+     *
+     * @param clienteDAO DAO para operaciones de clientes
+     * @param usuarioDAO DAO para operaciones de usuarios
+     */
     public ClienteBO(IClienteDAO clienteDAO, IUsuarioDAO usuarioDAO) {
-    this.clienteDAO = clienteDAO;
-    this.usuarioDAO = usuarioDAO;
-}
-
-   @Override
-public void registrarCliente(Cliente cliente) throws NegocioException {
-
-    validarCliente(cliente);
-
-    try {
-
-        // 
-        String username = cliente.getNombreCompleto()
-                .toLowerCase()
-                .replace(" ", ".");
-
-        // 
-        int idGenerado = usuarioDAO.insertar(
-                username,
-                "Cliente",
-                "1234"
-        );
-
-        // 
-        cliente.setIdCliente(idGenerado);
-
-        // 
-        clienteDAO.insertar(cliente);
-
-    } catch (PersistenciaException e) {
-        throw new NegocioException("Error al registrar cliente completo.", e);
+        this.clienteDAO = clienteDAO;
+        this.usuarioDAO = usuarioDAO;
     }
-}
 
+    /**
+     * Registra un nuevo cliente en el sistema.
+     * <p>
+     * Realiza validaciones de negocio, genera automáticamente un usuario
+     * asociado y posteriormente guarda el cliente en la base de datos.
+     * </p>
+     *
+     * @param cliente Objeto Cliente con la información a registrar
+     * @throws NegocioException Si ocurre un error en validaciones o persistencia
+     */
+   @Override
+    public void registrarCliente(Cliente cliente) throws NegocioException {
+
+        validarCliente(cliente);
+
+        try {
+
+            String username = cliente.getNombreCompleto()
+                    .toLowerCase()
+                    .replace(" ", ".");
+
+            int idGenerado = usuarioDAO.insertar(
+                    username,
+                    "Cliente",
+                    "1234"
+            );
+
+            cliente.setIdCliente(idGenerado);
+
+            clienteDAO.insertar(cliente);
+
+        } catch (PersistenciaException e) {
+            throw new NegocioException("Error al registrar cliente completo.", e);
+        }
+    }
+
+    /**
+     * Actualiza la información de un cliente existente.
+     *
+     * @param cliente Objeto Cliente con la información actualizada
+     * @throws NegocioException Si el ID es inválido, fallan las validaciones
+     *                          o ocurre un error en persistencia
+     */
     @Override
     public void actualizarCliente(Cliente cliente) throws NegocioException {
 
@@ -81,6 +117,14 @@ public void registrarCliente(Cliente cliente) throws NegocioException {
         LOG.info("Cliente actualizado correctamente.");
     }
 
+    /**
+     * Busca un cliente por su identificador.
+     *
+     * @param idCliente ID del cliente a buscar
+     * @return Cliente encontrado
+     * @throws NegocioException Si el ID es inválido, no existe el cliente
+     *                          o ocurre un error en persistencia
+     */
     @Override
     public Cliente buscarPorId(int idCliente) throws NegocioException {
 
@@ -102,6 +146,13 @@ public void registrarCliente(Cliente cliente) throws NegocioException {
         }
     }
 
+    /**
+     * Valida que los datos del cliente cumplan con las reglas de negocio.
+     *
+     * @param cliente Cliente a validar
+     * @throws NegocioException Si algún dato obligatorio es inválido o no cumple
+     *                          con las reglas establecidas
+     */
     private void validarCliente(Cliente cliente) throws NegocioException {
 
         if (cliente.getNombreCompleto() == null
@@ -143,22 +194,34 @@ public void registrarCliente(Cliente cliente) throws NegocioException {
             }
         }
     }
+
+    /**
+     * Desactiva un cliente en el sistema.
+     * <p>
+     * Verifica la existencia del cliente y posteriormente desactiva
+     * el usuario asociado.
+     * </p>
+     *
+     * @param idCliente ID del cliente a desactivar
+     * @throws NegocioException Si el cliente no existe o ocurre un error
+     *                          en la capa de persistencia
+     */
     public void desactivarCliente(int idCliente)
         throws NegocioException {
 
-    try {
+        try {
 
-        Cliente cliente = clienteDAO.buscarPorId(idCliente);
+            Cliente cliente = clienteDAO.buscarPorId(idCliente);
 
-        if (cliente == null) {
-            throw new NegocioException("Cliente no existe");
+            if (cliente == null) {
+                throw new NegocioException("Cliente no existe");
+            }
+
+            usuarioDAO.desactivarUsuario(idCliente);
+
+        } catch (PersistenciaException e) {
+            throw new NegocioException(
+                    "Error al desactivar cliente", e);
         }
-
-        usuarioDAO.desactivarUsuario(idCliente);
-
-    } catch (PersistenciaException e) {
-        throw new NegocioException(
-                "Error al desactivar cliente", e);
     }
-}
 }

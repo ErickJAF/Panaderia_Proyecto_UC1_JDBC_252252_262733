@@ -14,18 +14,46 @@ import persistencia.DAOs.IPedidoDAO;
 import persistencia.excepciones.PersistenciaException;
 
 /**
- *
+ * Clase de lógica de negocio encargada de gestionar las operaciones
+ * relacionadas con los pedidos del sistema.
+ * <p>
+ * Permite realizar búsquedas de pedidos mediante distintos filtros,
+ * así como generar pagos asociados, aplicando validaciones de negocio
+ * antes de interactuar con la capa de persistencia.
+ * </p>
+ * 
  * @author ERICK
  */
 public class PedidoBO implements IPedidoBO{
     
+    /**
+     * DAO encargado de las operaciones de persistencia de pedidos.
+     */
     private final IPedidoDAO pedidoDAO;
+
+    /**
+     * Logger para el registro de eventos y errores relacionados con pedidos.
+     */
     private static final Logger LOG = Logger.getLogger(PedidoBO.class.getName());
 
+    /**
+     * Constructor que recibe la dependencia necesaria para la gestión
+     * de pedidos.
+     *
+     * @param pedidoDAO DAO para operaciones de pedidos
+     */
     public PedidoBO(IPedidoDAO pedidoDAO) {
         this.pedidoDAO = pedidoDAO;
     }
     
+    /**
+     * Busca pedidos asociados a un cliente específico.
+     *
+     * @param nombreCliente Nombre del cliente para realizar la búsqueda
+     * @return Lista de objetos PedidoEntregaDTO relacionados con el cliente
+     * @throws NegocioException Si el nombre es inválido o ocurre un error
+     *                          en la capa de persistencia
+     */
     @Override
     public List<PedidoEntregaDTO> buscarPorCliente(String nombreCliente) throws NegocioException {
         if (nombreCliente == null || nombreCliente.isEmpty()) {
@@ -40,6 +68,14 @@ public class PedidoBO implements IPedidoBO{
         }
     }
 
+    /**
+     * Obtiene los pedidos que se encuentran en un estado determinado.
+     *
+     * @param estado Estado por el cual se filtrarán los pedidos
+     * @return Lista de objetos PedidoEntregaDTO que coinciden con el estado
+     * @throws NegocioException Si el estado es inválido o ocurre un error
+     *                          en la capa de persistencia
+     */
     @Override
     public List<PedidoEntregaDTO> obtenerPorEstado(String estado) throws NegocioException {
         if (estado == null || estado.isBlank()) {
@@ -54,6 +90,14 @@ public class PedidoBO implements IPedidoBO{
         }
     }
 
+    /**
+     * Busca pedidos asociados a un número de teléfono específico.
+     *
+     * @param telefono Número de teléfono para realizar la búsqueda
+     * @return Lista de objetos PedidoEntregaDTO relacionados con el teléfono
+     * @throws NegocioException Si el teléfono es inválido o ocurre un error
+     *                          en la capa de persistencia
+     */
     @Override
     public List<PedidoEntregaDTO> buscarPorTelefono(String telefono) throws NegocioException {
         if (telefono == null || telefono.isBlank()) {
@@ -68,6 +112,15 @@ public class PedidoBO implements IPedidoBO{
         }
     }
 
+    /**
+     * Busca pedidos dentro de un rango de fechas determinado.
+     *
+     * @param inicio Fecha inicial del rango de búsqueda
+     * @param fin Fecha final del rango de búsqueda
+     * @return Lista de objetos PedidoEntregaDTO dentro del rango indicado
+     * @throws NegocioException Si las fechas son inválidas o ocurre un error
+     *                          en la capa de persistencia
+     */
     @Override
     public List<PedidoEntregaDTO> buscarPorRangoFechas(LocalDate inicio, LocalDate fin) throws NegocioException {
         if (inicio == null || fin == null) {
@@ -85,6 +138,13 @@ public class PedidoBO implements IPedidoBO{
         }
     }
 
+    /**
+     * Busca pedidos mediante su número de folio.
+     *
+     * @param folio Número de folio del pedido
+     * @return Lista de objetos PedidoEntregaDTO asociados al folio
+     * @throws NegocioException Si ocurre un error en la capa de persistencia
+     */
     @Override
     public List<PedidoEntregaDTO> buscarPorFolio(int folio) throws NegocioException {
         try {
@@ -95,6 +155,19 @@ public class PedidoBO implements IPedidoBO{
         }
     }
 
+    /**
+     * Genera el pago de un pedido siempre que cumpla con las reglas de negocio.
+     * <p>
+     * Solo permite generar el pago si el pedido existe y se encuentra
+     * en estado "Listo".
+     * </p>
+     *
+     * @param monto Monto a pagar
+     * @param metodoPago Método utilizado para realizar el pago
+     * @param idPedido Identificador del pedido
+     * @throws NegocioException Si el pedido no existe, no está en estado válido
+     *                          o ocurre un error en la capa de persistencia
+     */
     @Override
     public void generarPago(double monto, String metodoPago, int idPedido) throws NegocioException {
 
@@ -120,6 +193,12 @@ public class PedidoBO implements IPedidoBO{
         }
     }
     
+    /**
+     * Obtiene todos los pedidos registrados en el sistema.
+     *
+     * @return Lista completa de objetos PedidoEntregaDTO
+     * @throws NegocioException Si ocurre un error en la capa de persistencia
+     */
     @Override
     public List<PedidoEntregaDTO> obtenerTodos() throws NegocioException {
         try {
