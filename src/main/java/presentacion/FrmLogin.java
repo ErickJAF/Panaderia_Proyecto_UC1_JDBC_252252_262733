@@ -100,19 +100,12 @@ container.add(lblRegistro, gbc);
         add(container);
 
         btnLogin.addActionListener(e -> iniciarSesion());
-        lblRegistro.addMouseListener(new java.awt.event.MouseAdapter() {
-    @Override
-    public void mouseClicked(java.awt.event.MouseEvent evt) {
-        FrmRegistroCliente registro = new FrmRegistroCliente(FrmLogin.this);
-        registro.setVisible(true);
-        setVisible(false);
-    }
-});
+       
 
         // 
         btnExpress.addActionListener(e -> {
             dispose();
-            new FrmCrearPedidoProgramado(
+            new FrmCrearPedido(
                     usuarioBO,
                     productoBO,
                     pedidoProgramadoBO,
