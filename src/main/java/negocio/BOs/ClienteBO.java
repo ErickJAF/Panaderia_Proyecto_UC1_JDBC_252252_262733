@@ -5,7 +5,11 @@
 package negocio.BOs;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
+import negocio.DTOs.ClienteDTO;
+import negocio.DTOs.TelefonoDTO;
 import negocio.excepciones.NegocioException;
 import persistencia.DAOs.IClienteDAO;
 import persistencia.DAOs.IUsuarioDAO;
@@ -31,33 +35,70 @@ public class ClienteBO implements IClienteBO{
     this.usuarioDAO = usuarioDAO;
 }
 
-   @Override
-public void registrarCliente(Cliente cliente) throws NegocioException {
-
-    validarCliente(cliente);
+    /**
+     *
+     * @param dto
+     * @throws NegocioException
+     */
+    @Override
+public String registrarCliente(ClienteDTO dto)
+        throws NegocioException {
 
     try {
 
-        // 
-        String username = cliente.getNombreCompleto()
-                .toLowerCase()
-                .replace(" ", ".");
+        // Validaciones básicas
+        if (dto.getNombreCompleto() == null || dto.getNombreCompleto().isBlank()) {
+            throw new NegocioException("Nombre obligatorio");
+        }
 
-        // 
-        int idGenerado = usuarioDAO.insertar(
-                username,
-                "Cliente",
-                "1234"
+        if (dto.getTelefonos() == null || dto.getTelefonos().isEmpty()) {
+            throw new NegocioException("Debe agregar al menos un teléfono");
+        }
+
+        if (dto.getEdad() < 18) {
+            throw new NegocioException("Debe ser mayor de edad");
+        }
+
+        // Generar usuario automático
+        String base = dto.getNombreCompleto()
+                .substring(0, 3)
+                .toLowerCase();
+
+        String usuarioGenerado = base + ".cli";
+
+        // Insertar usuario
+        usuarioDAO.insertar(
+                usuarioGenerado,
+                "CLIENTE",
+                dto.getContrasena()
         );
 
-        // 
-        cliente.setIdCliente(idGenerado);
+        // Convertir DTO → Dominio
+        Cliente cliente = new Cliente();
+        cliente.setNombreCompleto(dto.getNombreCompleto());
+        cliente.setFechaNacimiento(dto.getFechaNacimiento());
+        cliente.setCalle("SIN CALLE");
+        cliente.setColonia("SIN COLONIA");
 
-        // 
+        // Convertir teléfonos
+        List<String> telefonos = new ArrayList<>();
+
+        for (TelefonoDTO tel : dto.getTelefonos()) {
+            telefonos.add(tel.getNumero());
+        }
+
+        cliente.setTelefonos(telefonos);
+
+        // Insertar cliente
         clienteDAO.insertar(cliente);
 
-    } catch (PersistenciaException e) {
-        throw new NegocioException("Error al registrar cliente completo.", e);
+        
+        return usuarioGenerado;
+
+    } catch (Exception e) {
+
+        throw new NegocioException(
+                "Error al registrar cliente: " + e.getMessage());
     }
 }
 
@@ -161,4 +202,6 @@ public void registrarCliente(Cliente cliente) throws NegocioException {
                 "Error al desactivar cliente", e);
     }
 }
+
+   
 }

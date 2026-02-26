@@ -83,16 +83,33 @@ public class FrmLogin extends JFrame {
         JButton btnLogin = new JButton("INGRESAR");
         gbc.gridy = 5;
         container.add(btnLogin, gbc);
+        
+        // Texto tipo link para registro
+JLabel lblRegistro = new JLabel("<HTML><U>No tienes cuenta? Regístrate</U></HTML>");
+lblRegistro.setForeground(ACCENT_COLOR);
+lblRegistro.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+gbc.gridy = 6;
+gbc.insets = new Insets(5, 0, 20, 0);
+container.add(lblRegistro, gbc);
 
         JButton btnExpress = new JButton("PEDIDO EXPRESS");
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         container.add(btnExpress, gbc);
 
         add(container);
 
         btnLogin.addActionListener(e -> iniciarSesion());
+        lblRegistro.addMouseListener(new java.awt.event.MouseAdapter() {
+    @Override
+    public void mouseClicked(java.awt.event.MouseEvent evt) {
+        FrmRegistroCliente registro = new FrmRegistroCliente(FrmLogin.this);
+        registro.setVisible(true);
+        setVisible(false);
+    }
+});
 
-        // 🔹 CORREGIDO
+        // 
         btnExpress.addActionListener(e -> {
             dispose();
             new FrmCrearPedidoProgramado(
@@ -145,4 +162,6 @@ public class FrmLogin extends JFrame {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
+    
+    
 }
