@@ -69,12 +69,6 @@ public class FrmPanelEmpleado extends JFrame {
         gbc.insets = new Insets(0, 0, 12, 0);
         container.add(btnGestionDeEntregas, gbc);
 
-        JButton btnGestionProductos = crearBotonRectangular("GESTIONAR PRODUCTOS", Color.WHITE, ACCENT_COLOR);
-        btnGestionProductos.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
-        gbc.gridy = 2;
-        gbc.insets = new Insets(0, 0, 25, 0);
-        container.add(btnGestionProductos, gbc);
-
         JSeparator sep = new JSeparator();
         gbc.gridy = 3;
         gbc.insets = new Insets(0, 0, 20, 0);
