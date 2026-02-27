@@ -9,9 +9,16 @@ import java.util.List;
 import negocio.excepciones.NegocioException;
 
 /**
+ * Interfaz que define las operaciones de la lógica de negocio para los productos.
  *
  * @author icoro
  */
 public interface IProductoBO {
+    
+    /**
+     * Obtiene una lista con todos los productos que se encuentran disponibles.
+     * * @return Una lista de objetos {@link ProductoDTO} que representan los productos disponibles.
+     * @throws NegocioException Si ocurre un error en la capa de negocio al intentar recuperar la información.
+     */
     List<ProductoDTO> obtenerDisponibles() throws NegocioException;
 }
